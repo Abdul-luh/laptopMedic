@@ -24,3 +24,10 @@ export interface UserHistory {
   request: DiagnosisRequest;
   response: DiagnosisResponse;
 }
+
+export interface RegisterRequest {
+  name: string;
+  email: string;
+  password: string;
+  role: string;
+}
