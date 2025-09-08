@@ -36,34 +36,39 @@ export default function LoginPage() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrors({});
+  e.preventDefault();
+  setErrors({});
 
-    try {
-      const validatedData = loginSchema.parse(formData);
-      const result = await login(validatedData.email, validatedData.password);
+  try {
+    const validatedData = loginSchema.parse(formData);
+    const result = await login(validatedData.email, validatedData.password);
 
-      console.log('Login result:', result);
+    console.log("Login result:", result);
 
-      if (result.success) {
-        router.push("/");
-      } else {
-        setErrors({ general: result.error || "Login failed. Please try again." });
-      }
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        const validationErrors: Record<string, string> = {};
-        error.issues.forEach((err) => {
-          if (err.path[0]) {
-            validationErrors[err.path[0] as string] = err.message;
-          }
-        });
-        setErrors(validationErrors);
+    if (result.success) {
+      router.push("/dashboard"); // ✅ push to dashboard instead of root
+    } else {
+      if (result.error) {
+        setErrors({ general: result.error }); // show specific error from backend
       } else {
         setErrors({ general: "Login failed. Please try again." });
       }
     }
-  };
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      const validationErrors: Record<string, string> = {};
+      error.issues.forEach((err) => {
+        if (err.path[0]) {
+          validationErrors[err.path[0] as string] = err.message;
+        }
+      });
+      setErrors(validationErrors);
+    } else {
+      setErrors({ general: "Login failed. Please try again." });
+    }
+  }
+};
+
 
   return (
     <div className="min-h-screen flex  bg-gray-50">
