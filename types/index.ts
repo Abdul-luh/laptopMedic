@@ -31,3 +31,4 @@ export interface RegisterRequest {
   password: string;
   role: string;
 }
+

@@ -5,12 +5,12 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
+import axios from "axios";
 import { RegisterRequest } from "@/types";
 import { registerSchema } from "@/lib/validation";
 
 type RegisterFormData = z.infer<typeof registerSchema>;
 const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
-
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState<Partial<RegisterFormData>>({
@@ -48,38 +48,60 @@ export default function RegisterPage() {
         role: validatedData.role,
       };
 
-      // Call your backend API
-      const response = await fetch(`${baseURL}/auth/register`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(registerData),
-      });
+      // Call your backend API using axios
+      const response = await axios.post(
+        `${baseURL}/auth/register`,
+        registerData,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          timeout: 10000, // 10 second timeout
+        }
+      );
 
-      const result = await response.json();
+      console.log(response)
 
-      if (response.ok) {
+      if (response.status === 200 || response.status === 201) {
         setRegistrationSuccess(true);
         // Optionally redirect to login page after success
         setTimeout(() => {
           router.push("/login");
         }, 2000);
-      } else {
-        // Handle backend errors
-        if (result.message) {
-          setErrors({ general: result.message });
-        } else if (result.errors) {
-          // Handle field-specific errors from backend
-          const backendErrors: Record<string, string> = {};
-          result.errors.forEach((error: { field: string; message: string }) => {
-            backendErrors[error.field] = error.message;
-          });
-          setErrors(backendErrors);
-        }
       }
     } catch (error: unknown) {
-      if (
+      if (axios.isAxiosError(error)) {
+        // Handle axios errors (network, HTTP errors)
+        if (error.response) {
+          // Server responded with error status
+          const result = error.response.data;
+          
+          if (result.message) {
+            setErrors({ general: result.message });
+          } else if (result.errors && Array.isArray(result.errors)) {
+            // Handle field-specific errors from backend
+            const backendErrors: Record<string, string> = {};
+            result.errors.forEach((error: { field: string; message: string }) => {
+              backendErrors[error.field] = error.message;
+            });
+            setErrors(backendErrors);
+          } else {
+            setErrors({
+              general: `Registration failed: ${error.response.status} ${error.response.statusText}`,
+            });
+          }
+        } else if (error.request) {
+          // Network error
+          setErrors({
+            general: "Network error. Please check your connection and try again.",
+          });
+        } else {
+          // Other axios error
+          setErrors({
+            general: "An unexpected error occurred. Please try again.",
+          });
+        }
+      } else if (
         typeof error === "object" &&
         error !== null &&
         "errors" in error &&
@@ -92,10 +114,9 @@ export default function RegisterPage() {
         });
         setErrors(validationErrors);
       } else {
-        // Handle network errors
+        // Handle other errors
         setErrors({
-          general:
-            "Registration failed. Please check your connection and try again.",
+          general: "Registration failed. Please try again.",
         });
       }
     } finally {
@@ -304,8 +325,8 @@ export default function RegisterPage() {
                     className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white text-gray-900"
                   >
                     <option value="user">Regular User</option>
-                    <option value="engineer">engineer</option>
-                    <option value="admin">admin</option>
+                    <option value="engineer">Engineer</option>
+                    <option value="admin">Admin</option>
                   </select>
                   <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
                     <svg
@@ -560,63 +581,4 @@ export default function RegisterPage() {
       </div>
     </div>
   );
-}
-
-// You'll also need to create the API route: app/api/auth/register/route.ts
-// app/api/auth/register/route.ts
-import { NextResponse } from "next/server";
-
-export async function POST(request: Request) {
-  try {
-    const { name, email, password, role } = await request.json();
-
-    // Validate required fields
-    if (!name || !email || !password) {
-      return NextResponse.json(
-        { message: "Missing required fields" },
-        { status: 400 }
-      );
-    }
-
-    // Here you would typically:
-    // 1. Hash the password
-    // 2. Check if user already exists
-    // 3. Save to database
-    // 4. Send confirmation email
-
-    // For now, we'll simulate the backend call
-    // Replace this with your actual backend API call
-    const backendResponse = await fetch("YOUR_BACKEND_API_URL/auth/register", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        name,
-        email,
-        password, // In real implementation, hash this first
-        role,
-      }),
-    });
-
-    const result = await backendResponse.json();
-
-    if (!backendResponse.ok) {
-      return NextResponse.json(
-        { message: result.message || "Registration failed" },
-        { status: backendResponse.status }
-      );
-    }
-
-    return NextResponse.json({
-      message: "User registered successfully",
-      user: result.user,
-    });
-  } catch (error) {
-    console.error("Registration error:", error);
-    return NextResponse.json(
-      { message: "Internal server error" },
-      { status: 500 }
-    );
-  }
 }

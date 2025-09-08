@@ -4,32 +4,169 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import axios from "axios";
+import { z } from "zod";
+import { loginSchema } from "@/lib/validation";
+
+type LoginFormData = z.infer<typeof loginSchema>;
+
+const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [formData, setFormData] = useState<LoginFormData>({
+    email: "",
+    password: "",
+  });
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+
+  const handleInputChange = (field: keyof LoginFormData, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: "" }));
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError("");
+    setErrors({});
 
-    // Simulate login process
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      // Validate form data
+      const validatedData = loginSchema.parse(formData);
 
-    if (email === "demo@laptopmedic.com" && password === "password123") {
-      // Simulate successful login
-      localStorage.setItem("isLoggedIn", "true");
-      router.push("/");
-    } else {
-      setError("Invalid email or password");
+      // Call backend API using axios
+      const response = await axios.post(
+        `${baseURL}/auth/login`,
+        {
+          email: validatedData.email,
+          password: validatedData.password,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          timeout: 10000, // 10 second timeout
+        }
+      );
+      console.log(response)
+
+      if (response.status === 200 || response.status === 201) {
+        // Handle successful login
+        const { token, user } = response.data;
+        
+        // Store authentication data (you might want to use httpOnly cookies instead)
+        localStorage.setItem("authToken", token);
+        localStorage.setItem("user", JSON.stringify(user));
+        localStorage.setItem("isLoggedIn", "true");
+          router.push("/");
+
+        // Redirect based on user role or to dashboard
+        //   router.push("/admin/dashboard");
+        // if (user.role === "admin") {
+        // } else if (user.role === "engineer") {
+        //   router.push("/engineer/dashboard");
+        // } else {
+        //   router.push("/dashboard");
+        // }
+      }
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        // Handle axios errors (network, HTTP errors)
+        if (error.response) {
+          // Server responded with error status
+          const result = error.response.data;
+          
+          if (result.message) {
+            setErrors({ general: result.message });
+          } else if (result.errors && Array.isArray(result.errors)) {
+            // Handle field-specific errors from backend
+            const backendErrors: Record<string, string> = {};
+            result.errors.forEach((error: { field: string; message: string }) => {
+              backendErrors[error.field] = error.message;
+            });
+            setErrors(backendErrors);
+          } else {
+            // Handle common HTTP status codes
+            switch (error.response.status) {
+              case 401:
+                setErrors({ general: "Invalid email or password" });
+                break;
+              case 403:
+                setErrors({ general: "Account access denied" });
+                break;
+              case 429:
+                setErrors({ general: "Too many login attempts. Please try again later." });
+                break;
+              default:
+                setErrors({ general: "Login failed. Please try again." });
+            }
+          }
+        } else if (error.request) {
+          // Network error
+          setErrors({
+            general: "Network error. Please check your connection and try again.",
+          });
+        } else {
+          // Other axios error
+          setErrors({
+            general: "An unexpected error occurred. Please try again.",
+          });
+        }
+      } else if (
+        typeof error === "object" &&
+        error !== null &&
+        "errors" in error &&
+        Array.isArray((error as { errors: unknown }).errors)
+      ) {
+        // Handle Zod validation errors
+        const validationErrors: Record<string, string> = {};
+        (error as { errors: Array<{ path: [string]; message: string }> }).errors.forEach((err) => {
+          validationErrors[err.path[0]] = err.message;
+        });
+        setErrors(validationErrors);
+      } else {
+        // Handle other errors
+        setErrors({
+          general: "Login failed. Please try again.",
+        });
+      }
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    setIsLoading(false);
+  // Demo login function (fallback)
+  const handleDemoLogin = async () => {
+    setIsLoading(true);
+    setErrors({});
+
+    try {
+      // Simulate demo login
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      
+      // Create demo user data
+      const demoUser = {
+        id: "demo-user-id",
+        name: "Demo User",
+        email: "demo@laptopmedic.com",
+        role: "user"
+      };
+
+      localStorage.setItem("authToken", "demo-token-123");
+      localStorage.setItem("user", JSON.stringify(demoUser));
+      localStorage.setItem("isLoggedIn", "true");
+
+      router.push("/dashboard");
+    } catch (error) {
+      setErrors({ general: "Demo login failed. Please try again." });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -51,12 +188,13 @@ export default function LoginPage() {
               />
             </svg>
           </div>
-          <h1 className="text-xl font-bold text-gray-800">Laptop Medic</h1>
+          <h1 className="text-xl font-bold text-gray-800">Welcome Back</h1>
+          <p className="text-gray-600 mt-2">Sign in to your Laptop Medic account</p>
         </div>
 
         <div className="bg-white rounded-lg shadow-lg">
           <div className="p-8">
-            {error && (
+            {errors.general && (
               <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
                 <div className="flex">
                   <div className="flex-shrink-0">
@@ -73,19 +211,20 @@ export default function LoginPage() {
                     </svg>
                   </div>
                   <div className="ml-3">
-                    <p className="text-sm text-red-800">{error}</p>
+                    <p className="text-sm text-red-800">{errors.general}</p>
                   </div>
                 </div>
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Email Field */}
               <div>
                 <label
                   htmlFor="email"
                   className="block text-sm font-medium text-gray-700 mb-2"
                 >
-                  Enter your email
+                  Email Address
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -106,20 +245,27 @@ export default function LoginPage() {
                   <input
                     id="email"
                     type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange("email", e.target.value)}
+                    className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 ${
+                      errors.email ? "border-red-300" : "border-gray-300"
+                    }`}
+                    placeholder="Enter your email address"
                     required
                   />
                 </div>
+                {errors.email && (
+                  <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+                )}
               </div>
 
+              {/* Password Field */}
               <div>
                 <label
                   htmlFor="password"
                   className="block text-sm font-medium text-gray-700 mb-2"
                 >
-                  Enter your password
+                  Password
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -140,9 +286,12 @@ export default function LoginPage() {
                   <input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    value={formData.password}
+                    onChange={(e) => handleInputChange("password", e.target.value)}
+                    className={`w-full pl-10 pr-10 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 ${
+                      errors.password ? "border-red-300" : "border-gray-300"
+                    }`}
+                    placeholder="Enter your password"
                     required
                   />
                   <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
@@ -189,39 +338,79 @@ export default function LoginPage() {
                     </button>
                   </div>
                 </div>
+                {errors.password && (
+                  <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+                )}
               </div>
 
               <div className="text-right">
-                <a
-                  href="#"
+                <Link
+                  href="/forgot-password"
                   className="text-sm text-blue-600 hover:text-blue-800"
                 >
                   Forgot Password?
-                </a>
+                </Link>
               </div>
 
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-gray-900 hover:bg-gray-800 disabled:bg-gray-400 text-white font-medium py-3 px-4 rounded-full transition-colors"
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-3 px-4 rounded-lg transition-colors"
               >
-                {isLoading ? "Logging in..." : "Log in"}
+                {isLoading ? (
+                  <div className="flex items-center justify-center">
+                    <svg
+                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Signing in...
+                  </div>
+                ) : (
+                  "Sign In"
+                )}
               </button>
             </form>
+
+            {/* Demo Login Button */}
+            <div className="mt-4">
+              <button
+                onClick={handleDemoLogin}
+                disabled={isLoading}
+                className="w-full bg-gray-100 hover:bg-gray-200 disabled:bg-gray-50 text-gray-700 font-medium py-3 px-4 rounded-lg transition-colors border border-gray-300"
+              >
+                {isLoading ? "Please wait..." : "Try Demo Login"}
+              </button>
+            </div>
 
             <div className="text-center mt-6">
               <p className="text-gray-600">
                 Don&apos;t have an account?{" "}
                 <Link
-                  href="/signup"
-                  className="text-blue-600 hover:text-blue-800"
+                  href="/register"
+                  className="text-blue-600 hover:text-blue-800 font-medium"
                 >
                   Sign up
                 </Link>
               </p>
             </div>
 
-            {/* Demo credentials */}
+            {/* Demo credentials info */}
             <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <div className="flex">
                 <div className="flex-shrink-0">
@@ -239,11 +428,7 @@ export default function LoginPage() {
                 </div>
                 <div className="ml-3">
                   <p className="text-sm text-blue-800">
-                    <strong>Demo credentials:</strong>
-                    <br />
-                    Email: demo@laptopmedic.com
-                    <br />
-                    Password: password123
+                    <strong>For testing:</strong> Use the demo login button above, or try with your backend credentials.
                   </p>
                 </div>
               </div>

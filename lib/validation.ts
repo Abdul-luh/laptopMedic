@@ -34,7 +34,14 @@ const registerSchema = z
     path: ["confirmPassword"],
   });
 
+  // Login validation schema
+const loginSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(1, "Password is required"),
+});
+
 export type DiagnosisFormData = z.infer<typeof diagnosisSchema>;
 export type ContactFormData = z.infer<typeof contactSchema>;
 export type RegisterFormData = z.infer<typeof registerSchema>;
-export { registerSchema };
+export type LoginSchema = z.infer<typeof loginSchema>;
+export { registerSchema, loginSchema };
