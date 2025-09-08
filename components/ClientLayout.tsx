@@ -61,7 +61,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
       }
       
       if (isDashboardPage || isPublicPage) {
-        return <DashboardHeader user={user!} />;
+        return <DashboardHeader />;
       }
     }
     

@@ -18,6 +18,7 @@ interface AdminHeaderProps {
 
 export default function AdminHeader({ user }: AdminHeaderProps) {
   const { logout } = useAuth();
+  console.log('AdminHeader user:', user);
 
   return (
     <header className="bg-gray-900 text-white border-b border-gray-700">

@@ -36,15 +36,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Initialize auth state
   useEffect(() => {
-    const initializeAuth = () => {
+    const initializeAuth = async () => {
       try {
         const authData = authUtils.getAuthData();
-        if (authData && authData.isLoggedIn) {
-          setUser(authData.user);
+        if (authData && authData.isLoggedIn && authData.user) {
+          // Verify the token is still valid by making a test request
+          try {
+            const response = await authApi.get('/user/profile');
+            if (response.data.user) {
+              setUser(response.data.user);
+              // Update localStorage with fresh user data
+              localStorage.setItem('user', JSON.stringify(response.data.user));
+            }
+          } catch (error) {
+            // Token is invalid, clear auth data
+            console.log('Token validation failed, clearing auth data');
+            authUtils.logout();
+            setUser(null);
+          }
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
         authUtils.logout();
+        setUser(null);
       } finally {
         setIsLoading(false);
       }
@@ -58,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const result = await authUtils.login(email, password);
       
-      if (result.success) {
+      if (result.success && result.user) {
         setUser(result.user);
         return { success: true };
       } else {
@@ -91,6 +105,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     setUser(null);
     authUtils.logout();
+    // Optionally redirect to home page
+    window.location.href = '/';
   };
 
   const refreshUser = async () => {

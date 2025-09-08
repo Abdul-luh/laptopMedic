@@ -1,15 +1,57 @@
 // app/page.tsx
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Brain, Headphones, BookOpen } from "lucide-react";
 import PageHeader from "@/components/Header";
 import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function HomePage() {
+  const [isWakingUp, setIsWakingUp] = useState(true);
+
+  useEffect(() => {
+    const wakeUpBackend = async () => {
+      try {
+        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+        if (!apiBaseUrl) {
+          console.warn("NEXT_PUBLIC_API_BASE_URL not found in environment variables");
+          setIsWakingUp(false);
+          return;
+        }
+
+        // Make a simple GET request to wake up the backend
+        await fetch(`${apiBaseUrl}/`, {
+          method: 'GET',
+          // Set a reasonable timeout for the wake-up request
+          signal: AbortSignal.timeout(30000), // 30 seconds
+        });
+        
+        console.log("Backend wake-up request sent successfully");
+      } catch (error) {
+        console.log("Backend wake-up request completed (this is expected for sleeping services):", error);
+      } finally {
+        setIsWakingUp(false);
+      }
+    };
+
+    wakeUpBackend();
+  }, []);
+
+  const { 
+  // handleStartDiagnosis, 
+  isLoading, 
+  isAuthenticated } = useAuth();
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* <PageHeader /> */}
+      
+      {isWakingUp && (
+        <div className="fixed top-4 right-4 bg-blue-100 border border-blue-400 text-blue-700 px-3 py-2 rounded z-50">
+          Waking up backend service...
+        </div>
+      )}
 
       <div className="max-w-6xl mx-auto px-4 py-12">
         {/* Hero Section */}
@@ -20,11 +62,13 @@ export default function HomePage() {
           <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
             Run a quick diagnosis to get expert help immediately
           </p>
-          <Link href="/diagnose">
-            <button className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-4 text-lg rounded-full transition-colors duration-200 font-medium">
-              Start Diagnosis
-            </button>
-          </Link>
+          <button
+            // onClick={handleStartDiagnosis}
+            disabled={isLoading}
+            className="bg-gray-900 hover:bg-gray-800 disabled:bg-gray-500 disabled:cursor-not-allowed text-white px-8 py-4 text-lg rounded-full transition-colors duration-200 font-medium"
+          >
+            {isLoading ? 'Loading...' : isAuthenticated ? 'Start Diagnosis' : 'Sign In to Start Diagnosis'}
+          </button>
         </div>
 
         {/* Feature Cards */}
