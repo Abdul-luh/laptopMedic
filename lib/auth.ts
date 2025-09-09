@@ -31,9 +31,13 @@ authApi.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid, logout user
-      authUtils.logout();
-      window.location.href = '/login';
+      const originalRequest = error.config;
+
+      // Skip redirect if it's the login or register request
+      if (!originalRequest?.url?.includes("/auth/login") && !originalRequest?.url?.includes("/auth/register")) {
+        authUtils.logout();
+        window.location.href = "/login";
+      }
     }
     return Promise.reject(error);
   }
@@ -110,17 +114,22 @@ async login(email: string, password: string) {
         };
       } catch (userError) {
         console.error("Failed to fetch user profile:", userError);
+
+        // clean up storage since we can't complete login properly
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("isLoggedIn");
+        localStorage.removeItem("user");
+
         return {
-          success: true,
-          user: null,
-          token: access_token,
+          success: false,
+          error: "Failed to fetch user profile. Please try again.",
         };
       }
     }
 
     return { success: false, error: "Login failed" };
   } catch (error) {
-    console.error("Login error:", error);
+    // console.error("Login error:", error);
 
     if (axios.isAxiosError(error)) {
       if (error.response) {

@@ -16,7 +16,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  register: (userData: RegisterData) => Promise<{ success: boolean; error?: string; errors?: any }>;
+  register: (userData: RegisterData) => Promise<{ success: boolean; error?: string; errors?: Record<string, string> }>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
@@ -42,7 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (authData && authData.isLoggedIn && authData.user) {
           // Verify the token is still valid by making a test request
           try {
-            const response = await authApi.get('/user/profile');
+            const response = await authApi.get('/user/me');
             if (response.data.user) {
               setUser(response.data.user);
               // Update localStorage with fresh user data
@@ -111,7 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshUser = async () => {
     try {
-      const response = await authApi.get('/user/profile');
+      const response = await authApi.get('/user/me');
       const updatedUser = response.data.user;
       setUser(updatedUser);
       

@@ -24,7 +24,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.push("/dashboard");
+      router.push("/");
     }
   }, [isAuthenticated, router]);
 
@@ -99,11 +99,6 @@ export default function LoginPage() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="max-w-md w-full space-y-6">
-          {errors.general && (
-            <div className="p-4 bg-red-50 border border-red-200 text-sm text-red-700 rounded-lg">
-              {errors.general}
-            </div>
-          )}
 
           <div>
             <input
@@ -151,13 +146,35 @@ export default function LoginPage() {
             </Link>
           </div>
 
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full py-3 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-semibold transition"
-          >
-            {isLoading ? "Signing in..." : "Log in"}
-          </button>
+          {/* Submit Button */}
+<button
+  type="submit"
+  disabled={isLoading}
+  className="w-full py-3 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-semibold transition"
+>
+  {isLoading ? "Signing in..." : "Log in"}
+</button>
+
+{/* Error Message (shows below button) */}
+{errors.general && (
+  <div className="mt-4 flex items-center p-3 rounded-lg border border-red-300 bg-red-50 text-red-700 text-sm">
+    <svg
+      className="w-5 h-5 mr-2 text-red-600 flex-shrink-0"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L4.34 16c-.77 1.333.192 3 1.732 3z"
+      />
+    </svg>
+    <span>{errors.general}</span>
+  </div>
+)}
+
 
           <p className="text-center text-gray-600">
             Don’t have an account?{" "}

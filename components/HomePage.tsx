@@ -3,7 +3,6 @@
 
 import React, { useEffect, useState } from "react";
 import { Brain, Headphones, BookOpen } from "lucide-react";
-import PageHeader from "@/components/Header";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -45,7 +44,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* <PageHeader /> */}
       
       {isWakingUp && (
         <div className="fixed top-4 right-4 bg-blue-100 border border-blue-400 text-blue-700 px-3 py-2 rounded z-50">
