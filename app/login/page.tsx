@@ -28,12 +28,15 @@ export default function LoginPage() {
     }
   }, [isAuthenticated, router]);
 
-  const handleInputChange = (field: keyof LoginFormData, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: "" }));
-    }
-  };
+const handleInputChange = (field: keyof LoginFormData, value: string) => {
+  setFormData((prev) => ({ ...prev, [field]: value }));
+
+  // Only clear the specific field error if it exists
+  if (errors[field]) {
+    setErrors((prev) => ({ ...prev, [field]: "" }));
+  }
+};
+
 
   const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
@@ -46,7 +49,7 @@ export default function LoginPage() {
     console.log("Login result:", result);
 
     if (result.success) {
-      router.push("/dashboard"); // ✅ push to dashboard instead of root
+      router.push("/"); // 
     } else {
       if (result.error) {
         setErrors({ general: result.error }); // show specific error from backend
@@ -68,6 +71,10 @@ export default function LoginPage() {
     }
   }
 };
+
+useEffect(() => {
+  console.log("Updated errors:", errors);
+}, [errors]);
 
 
   return (
@@ -174,6 +181,7 @@ export default function LoginPage() {
     <span>{errors.general}</span>
   </div>
 )}
+
 
 
           <p className="text-center text-gray-600">

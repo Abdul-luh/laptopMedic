@@ -132,36 +132,22 @@ async login(email: string, password: string) {
     // console.error("Login error:", error);
 
     if (axios.isAxiosError(error)) {
-      if (error.response) {
-        const result = error.response.data;
+  if (error.response) {
+    const result = error.response.data;
 
-        if (result.message) {
-          return { success: false, error: result.message };
-        } else {
-          switch (error.response.status) {
-            case 401:
-              return { success: false, error: "Invalid email or password" };
-            case 403:
-              return { success: false, error: "Account access denied" };
-            case 429:
-              return {
-                success: false,
-                error: "Too many login attempts. Please try again later.",
-              };
-            default:
-              return {
-                success: false,
-                error: "Login failed. Please try again.",
-              };
-          }
-        }
-      } else if (error.request) {
-        return {
-          success: false,
-          error: "Network error. Please check your connection.",
-        };
-      }
-    }
+    // ✅ Fallback to generic string if message doesn’t exist
+    const backendError =
+      result.message || result.error || result.detail || "Login failed";
+
+    return { success: false, error: backendError };
+  } else if (error.request) {
+    return {
+      success: false,
+      error: "Network error. Please check your connection.",
+    };
+  }
+}
+
 
     return { success: false, error: "Login failed. Please try again." };
   }
