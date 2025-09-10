@@ -45,30 +45,6 @@ export default function DiagnosePage() {
         <div className="absolute bottom-20 left-20 w-72 h-72 bg-pink-200 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-4000"></div>
       </div>
 
-      {/* Header */}
-      {/* <header className="relative z-10 px-4 py-6">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          Logo
-          <div className="flex items-center space-x-2">
-            <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6" />
-              </svg>
-            </div>
-            <span className="text-2xl font-bold text-blue-600">Laptop Medic</span>
-          </div>
-
-          Navigation
-          <nav className="hidden md:flex items-center space-x-8">
-            <a href="/home" className="text-blue-600 font-medium hover:text-blue-700 transition-colors">Home</a>
-            <a href="/history" className="text-blue-600 font-medium hover:text-blue-700 transition-colors">History</a>
-            <a href="/contact" className="text-blue-600 font-medium hover:text-blue-700 transition-colors">Contact</a>
-            <a href="/account" className="text-blue-600 font-medium hover:text-blue-700 transition-colors">Account</a>
-          </nav>
-        </div>
-      </header> */}
-
       {/* Main Content */}
       <main className="relative z-10 px-4 pb-12">
         <div className="max-w-7xl mx-auto mt-20">

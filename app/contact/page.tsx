@@ -2,8 +2,8 @@
 "use client";
 
 import React, { useState } from "react";
-import PageHeader from "@/components/Header";
-import { ContactFormData } from "@/lib/validation";
+import Image from "next/image";
+import { ContactFormData, contactSchema } from "@/lib/validation";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState<Partial<ContactFormData>>({});
@@ -13,213 +13,153 @@ export default function ContactPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
     setErrors({});
+    setIsSubmitting(true);
 
-    try {
-      // Simulate form submission
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      setSubmitted(true);
-    } catch (error: unknown) {
-      if (
-        typeof error === "object" &&
-        error !== null &&
-        "errors" in error &&
-        Array.isArray((error as { errors: unknown }).errors)
-      ) {
-        const newErrors: Record<string, string> = {};
-        (
-          error as { errors: Array<{ path: string[]; message: string }> }
-        ).errors.forEach((err) => {
-          newErrors[err.path[0]] = err.message;
-        });
-        setErrors(newErrors);
-      }
-    } finally {
+    const result = contactSchema.safeParse(formData);
+    if (!result.success) {
+      const newErrors: Record<string, string> = {};
+      result.error.issues.forEach((err) => {
+        newErrors[err.path[0] as string] = err.message;
+      });
+      setErrors(newErrors);
       setIsSubmitting(false);
+      return;
     }
+
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    setIsSubmitting(false);
+    setSubmitted(true);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setFormData({ ...formData, file });
-    }
+    if (file) setFormData({ ...formData, file });
   };
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        {/* <PageHeader /> */}
-        <div className="max-w-4xl mx-auto py-12 px-4">
-          <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-md">
-            <div className="p-8 text-center">
-              <h1 className="text-3xl font-bold mb-4 text-green-600">
-                Request Submitted Successfully!
-              </h1>
-              <p className="text-lg mb-6 text-gray-600">
-                Thank you for contacting us. A technician will review your
-                request and get back to you within 24 hours.
-              </p>
-              <button
-                onClick={() => setSubmitted(false)}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors"
-              >
-                Submit Another Request
-              </button>
-            </div>
-          </div>
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-center max-w-lg p-8 rounded-lg shadow-md">
+          <h1 className="text-3xl font-bold mb-4 text-green-600">
+            Request Submitted Successfully!
+          </h1>
+          <p className="text-gray-600 mb-6">
+            Thank you for contacting us. A technician will review your request and get back to you soon.
+          </p>
+          <button
+            onClick={() => setSubmitted(false)}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+          >
+            Submit Another Request
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* <PageHeader /> */}
-      <div className="max-w-4xl mx-auto py-12 px-4">
-        <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-md">
-          <div className="p-8">
-            <h1 className="text-3xl font-bold text-center mb-2 text-gray-800">
-              Need help?
-            </h1>
-            <h2 className="text-xl text-center mb-8 text-gray-600">
-              Contact a Technician
-            </h2>
+    <div className="min-h-screen flex items-center justify-center bg-white px-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 max-w-6xl w-full rounded-2xl overflow-hidden">
+        {/* Left Form Section */}
+        <div className="p-10 flex flex-col justify-center">
+          <h1 className="text-3xl font-bold text-blue-700 mb-2">
+            Need help?
+          </h1>
+          <h2 className="text-2xl font-semibold text-blue-700 mb-8">
+            Contact a Technician
+          </h2>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label
-                  htmlFor="fullName"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Full Name
-                </label>
-                <input
-                  id="fullName"
-                  type="text"
-                  value={formData.fullName || ""}
-                  onChange={(e) =>
-                    setFormData({ ...formData, fullName: e.target.value })
-                  }
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    errors.fullName ? "border-red-500" : "border-gray-300"
-                  }`}
-                />
-                {errors.fullName && (
-                  <p className="text-red-500 text-sm mt-1">{errors.fullName}</p>
-                )}
-              </div>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <input
+              type="text"
+              placeholder="Full name"
+              value={formData.fullName || ""}
+              onChange={(e) =>
+                setFormData({ ...formData, fullName: e.target.value })
+              }
+              className={`w-full text-gray-700 px-4 py-3 border rounded-md focus:outline-none ${
+                errors.fullName ? "border-red-500" : "border-[#2218DE]"
+              }`}
+            />
+            {errors.fullName && (
+              <p className="text-red-500 text-sm">{errors.fullName}</p>
+            )}
 
-              <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Email Address
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  value={formData.email || ""}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    errors.email ? "border-red-500" : "border-gray-300"
-                  }`}
-                />
-                {errors.email && (
-                  <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-                )}
-              </div>
+            <input
+              type="email"
+              placeholder="Email address"
+              value={formData.email || ""}
+              onChange={(e) =>
+                setFormData({ ...formData, email: e.target.value })
+              }
+              className={`w-full text-gray-700 px-4 py-3 border rounded-md focus:outline-none ${
+                errors.email ? "border-red-500" : "border-[#2218DE]"
+              }`}
+            />
+            {errors.email && (
+              <p className="text-red-500 text-sm">{errors.email}</p>
+            )}
 
-              <div>
-                <label
-                  htmlFor="problemDescription"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Problem Description
-                </label>
-                <textarea
-                  id="problemDescription"
-                  rows={6}
-                  placeholder="Please describe your laptop issue in detail..."
-                  value={formData.problemDescription || ""}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      problemDescription: e.target.value,
-                    })
-                  }
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    errors.problemDescription
-                      ? "border-red-500"
-                      : "border-gray-300"
-                  }`}
-                />
-                {errors.problemDescription && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.problemDescription}
-                  </p>
-                )}
-              </div>
+            <textarea
+              placeholder="Problem Description"
+              rows={5}
+              value={formData.problemDescription || ""}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  problemDescription: e.target.value,
+                })
+              }
+              className={`w-full text-gray-700 px-4 py-3 border rounded-md focus:outline-none ${
+                errors.problemDescription ? "border-red-500" : "border-[#2218DE]"
+              }`}
+            />
+            {errors.problemDescription && (
+              <p className="text-red-500 text-sm">
+                {errors.problemDescription}
+              </p>
+            )}
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Upload File (Optional)
-                </label>
-                <div className="relative">
-                  <input
-                    type="file"
-                    accept=".jpg,.jpeg,.png,.pdf,.txt,.doc,.docx"
-                    onChange={handleFileChange}
-                    className="hidden"
-                    id="file-upload"
-                  />
-                  <label
-                    htmlFor="file-upload"
-                    className="w-full py-3 px-4 border-2 border-dashed border-gray-300 hover:border-blue-500 rounded-lg cursor-pointer transition-colors flex items-center justify-center space-x-2"
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                      />
-                    </svg>
-                    <span>Upload File (Optional)</span>
-                  </label>
-                </div>
-                {formData.file && (
-                  <p className="text-sm text-gray-600 mt-2">
-                    Selected: {formData.file.name}
-                  </p>
-                )}
-              </div>
-
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full bg-gray-900 hover:bg-gray-800 disabled:bg-gray-400 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+            <div>
+              <label
+                htmlFor="file-upload"
+                className="inline-block px-4 py-2 border border-[#2218DE] text-blue-600 rounded-md cursor-pointer hover:bg-blue-50"
               >
-                {isSubmitting ? (
-                  <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    <span>Submitting Request...</span>
-                  </>
-                ) : (
-                  <span>Submit Request</span>
-                )}
-              </button>
-            </form>
-          </div>
+                Upload File
+              </label>
+              <input
+                id="file-upload"
+                type="file"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+              {formData.file && (
+                <p className="text-sm text-gray-600 mt-2">
+                  Selected: {formData.file.name}
+                </p>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full bg-[#2218DE] hover:bg-blue-800 disabled:bg-gray-400 text-white font-semibold py-3 rounded-md transition"
+            >
+              {isSubmitting ? "Submitting..." : "Submit Request"}
+            </button>
+          </form>
+        </div>
+
+        {/* Right Illustration Section */}
+        <div className="hidden md:flex items-center justify-center ">
+          <Image
+            src="/illustrations/contact-page-illustration.svg"
+            alt="Contact Illustration"
+            width={400}
+            height={400}
+            className="object-contain"
+          />
         </div>
       </div>
     </div>
