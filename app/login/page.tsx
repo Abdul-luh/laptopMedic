@@ -200,7 +200,7 @@ useEffect(() => {
           width={500}
           src="/illustrations/login-illustration.svg"
           alt="Login Illustration"
-          className="min-w-56 min-h-86 object-contain mx-auto"
+          className="min-w-86 min-h-86 object-contain mx-auto"
         />
       </section>
     </div>
