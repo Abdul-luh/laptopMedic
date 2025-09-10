@@ -1,7 +1,25 @@
 "use client";
 import { useState } from "react";
 import { DiagnosisResponse } from "../types";
+import axios from "axios";
 import { diagnosisSchema } from "@/lib/validation";
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+interface TroubleshootStep {
+  id: number;
+  step_number: number;
+  instruction: string;
+  completed: boolean;
+}
+
+interface TroubleshootResponse {
+  id: number;
+  laptop_brand: string;
+  laptop_model: string;
+  description: string;
+  steps: TroubleshootStep[];
+}
 
 export default function DiagnosisFormNew({
   onDiagnosisComplete,
@@ -14,10 +32,37 @@ export default function DiagnosisFormNew({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const brands = ["Dell", "HP", "Lenovo", "ASUS", "Acer", "Apple", "MSI", "Other"];
+  const brands = [
+    "Dell",
+    "HP",
+    "Lenovo",
+    "ASUS",
+    "Acer",
+    "Apple",
+    "MSI",
+    "Other",
+  ];
+
+  // Map backend response -> frontend DiagnosisResponse
+  const transformApiResponse = (
+    apiResponse: TroubleshootResponse
+  ): DiagnosisResponse => {
+    return {
+      problem: `Issue with ${apiResponse.laptop_brand} ${apiResponse.laptop_model}`,
+      cause: apiResponse.description,
+      solution: apiResponse.steps.map((step) => step.instruction),
+      estimatedTime: "30-60 minutes",
+      difficulty: "medium",
+      requiredTools: ["Basic tools"],
+      additionalTips: [
+        "Follow the steps in order",
+        "If issues persist, contact a technician",
+      ],
+      warningLevel: "warning",
+    };
+  };
 
   const handleSubmit = async () => {
-    // Validate with zod
     const result = diagnosisSchema.safeParse({
       laptop_brand: laptopBrand,
       laptop_model: laptopModel,
@@ -38,31 +83,20 @@ export default function DiagnosisFormNew({
     setErrors({});
     setIsSubmitting(true);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    try {
+      const response = await axios.post(`${API_BASE_URL}/troubleshoot/`, {
+        laptop_brand: laptopBrand,
+        laptop_model: laptopModel,
+        description,
+      });
 
-    // Mock response
-    const mockDiagnosis: DiagnosisResponse = {
-      problem: `Issue with ${laptopBrand} ${laptopModel}`,
-      cause: `The laptop is not powering on. Possible hardware or power-related issue.`,
-      solution: [
-        "Check if the charger and power cable are working",
-        "Remove battery and reconnect power",
-        "Inspect RAM and SSD connections",
-        "If unresolved, contact a technician",
-      ],
-      estimatedTime: "30-60 minutes",
-      difficulty: "medium" as const,
-      requiredTools: ["Screwdriver set", "Multimeter"],
-      additionalTips: [
-        "Ensure the power outlet is working",
-        "Try a different charger if available",
-      ],
-      warningLevel: "warning" as const,
-    };
-
-    onDiagnosisComplete(mockDiagnosis);
-    setIsSubmitting(false);
+      const diagnosisResponse = transformApiResponse(response.data);
+      onDiagnosisComplete(diagnosisResponse);
+    } catch (error) {
+      console.error("Error calling troubleshoot API:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -82,11 +116,11 @@ export default function DiagnosisFormNew({
           <select
             value={laptopBrand}
             onChange={(e) => setLaptopBrand(e.target.value)}
-            className="w-full px-4 py-4 text-gray-900 text-lg border-2 border-[#2218DE] rounded-xl focus:border-[#080198] focus:ring-0 outline-none transition-colors"
+            className="w-full px-4 py-4 text-gray-900 text-lg border-2 border-[#2218DE] rounded-xl focus:border-[#080198]"
           >
-            <option value="" className="bg-white/50 backdrop-blur-sm">Choose your laptop brand</option>
+            <option value="">Choose your laptop brand</option>
             {brands.map((brand) => (
-              <option key={brand} value={brand} className="bg-transparent/50 backdrop-blur-sm">
+              <option key={brand} value={brand}>
                 {brand}
               </option>
             ))}
@@ -103,7 +137,7 @@ export default function DiagnosisFormNew({
             placeholder="Enter your laptop model"
             value={laptopModel}
             onChange={(e) => setLaptopModel(e.target.value)}
-            className="w-full px-4 py-4 text-gray-900 text-lg border-2 border-[#2218DE] rounded-xl focus:border-[#080198] focus:ring-0 outline-none transition-colors"
+            className="w-full px-4 py-4 text-gray-900 text-lg border-2 border-[#2218DE] rounded-xl focus:border-[#080198]"
           />
           {errors.laptop_model && (
             <p className="text-red-500 text-sm mt-1">{errors.laptop_model}</p>
@@ -117,7 +151,7 @@ export default function DiagnosisFormNew({
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={4}
-            className="w-full px-4 py-4 text-gray-900 text-lg border-2 border-[#2218DE] rounded-xl focus:border-[#080198] focus:ring-0 outline-none transition-colors"
+            className="w-full px-4 py-4 text-gray-900 text-lg border-2 border-[#2218DE] rounded-xl focus:border-[#080198]"
           />
           {errors.description && (
             <p className="text-red-500 text-sm mt-1">{errors.description}</p>
@@ -128,15 +162,15 @@ export default function DiagnosisFormNew({
         <button
           onClick={handleSubmit}
           disabled={isSubmitting}
-          className="w-full bg-[#2218DE] hover:bg-[#080198] disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-xl text-lg transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl"
+          className="w-full bg-[#2218DE] hover:bg-[#080198] disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-xl text-lg flex items-center justify-center shadow-lg"
         >
           {isSubmitting ? (
             <>
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
-              <span>Analyzing...</span>
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-2"></div>
+              Analyzing...
             </>
           ) : (
-            <span>Run Diagnosis</span>
+            "Run Diagnosis"
           )}
         </button>
       </div>

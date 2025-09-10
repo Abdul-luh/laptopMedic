@@ -30,10 +30,10 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
                        pathname?.startsWith('/about') ||
                        pathname?.startsWith('/contact');
 
-  const isDashboardPage = pathname?.startsWith('/dashboard') ||
-                          pathname?.startsWith('/diagnose') ||
-                          pathname?.startsWith('/history') ||
-                          pathname?.startsWith('/profile');
+  // const isDashboardPage = pathname?.startsWith('/dashboard') ||
+  //                         pathname?.startsWith('/diagnose') ||
+  //                         pathname?.startsWith('/history') ||
+  //                         pathname?.startsWith('/profile');
 
   // const isAdminPage = pathname?.startsWith('/admin');
 
@@ -41,31 +41,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
 
   // Render different headers based on the current page
   const renderHeader = () => {
-    if (isAuthPage) {
-      // No header for auth pages
-      return null;
-    }
-
-    if (isPublicPage && !isAuthenticated) {
-      // Public header for non-authenticated users
-      return <PageHeader />;
-    }
-
-    // if (isAuthenticated) {
-    //   if (isAdminPage && user?.role === 'admin') {
-    //     return <AdminHeader user={user} />;
-    //   }
-    //
-    //   if (isEngineerPage && (user?.role === 'engineer' || user?.role === 'admin')) {
-    //     return <AdminHeader user={user} />; // You can create separate EngineerHeader if needed
-    //   }
-    //
-      if (isDashboardPage || isPublicPage) {
-        return <DashboardHeader />;
-      }
-    // }
-
-    // Fallback to public header
+ 
     return <PageHeader />;
   };
 
