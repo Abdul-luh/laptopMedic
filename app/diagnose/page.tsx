@@ -13,19 +13,23 @@ export default function DiagnosePage() {
 
   const handleDiagnosisComplete = (response: DiagnosisResponse) => {
     setDiagnosis(response);
-    // Save to local storage for history
-    const history = JSON.parse(
-      localStorage.getItem("diagnosisHistory") || "[]"
-    );
-    history.unshift({
-      id: Date.now().toString(),
-      timestamp: new Date().toISOString(),
-      response,
-    });
-    localStorage.setItem(
-      "diagnosisHistory",
-      JSON.stringify(history.slice(0, 10))
-    );
+    // Save to session storage instead of localStorage (artifacts don't support localStorage)
+    try {
+      const history = JSON.parse(
+        sessionStorage.getItem("diagnosisHistory") || "[]"
+      );
+      history.unshift({
+        id: Date.now().toString(),
+        timestamp: new Date().toISOString(),
+        response,
+      });
+      sessionStorage.setItem(
+        "diagnosisHistory",
+        JSON.stringify(history.slice(0, 10))
+      );
+    } catch (error) {
+      console.warn("Session storage not available, skipping history save");
+    }
   };
 
   const handleNewDiagnosis = () => {
@@ -50,15 +54,15 @@ export default function DiagnosePage() {
         <div className="max-w-7xl mx-auto mt-20">
           {diagnosis ? (
             <DiagnosisResult
-              diagnosis={diagnosis}
-              onNewDiagnosis={handleNewDiagnosis}
-              onContactTechnician={handleContactTechnician}
+              problemId={Number(diagnosis?.problem)}
             />
           ) : (
             <div className="grid lg:grid-cols-2 gap-12 items-center">
               {/* Left side - Form */}
               <div className="order-2 lg:order-1">
-                <DiagnosisFormNew onDiagnosisComplete={handleDiagnosisComplete} />
+                <DiagnosisFormNew
+                  onDiagnosisComplete={handleDiagnosisComplete}
+                />
               </div>
 
               {/* Right side - Hero Image */}
@@ -67,15 +71,40 @@ export default function DiagnosePage() {
                   <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full blur-3xl opacity-30 animate-pulse"></div>
                   <div className="relative bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-2xl">
                     <div className="w-80 h-80 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center">
-                      <svg className="w-32 h-32 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      <svg
+                        className="w-32 h-32 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={1}
+                          d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                        />
                       </svg>
                     </div>
                     {/* Decorative tools */}
                     <div className="absolute -top-4 -right-4 w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center shadow-lg">
-                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <svg
+                        className="w-6 h-6 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37-2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
                       </svg>
                     </div>
                   </div>
@@ -88,8 +117,18 @@ export default function DiagnosePage() {
 
       {/* Help button */}
       <button className="fixed bottom-8 right-8 w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110">
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <svg
+          className="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
         </svg>
       </button>
 
@@ -121,4 +160,3 @@ export default function DiagnosePage() {
     </div>
   );
 }
-

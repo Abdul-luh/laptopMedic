@@ -1,3 +1,5 @@
+
+// components/DiagnoseForm.tsx
 "use client";
 import { useState } from "react";
 import { DiagnosisResponse } from "../types";
@@ -6,6 +8,7 @@ import { diagnosisSchema } from "@/lib/validation";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
+// API Response interface
 interface TroubleshootStep {
   id: number;
   step_number: number;
@@ -18,6 +21,8 @@ interface TroubleshootResponse {
   laptop_brand: string;
   laptop_model: string;
   description: string;
+  solved: boolean;
+  created_at: string;
   steps: TroubleshootStep[];
 }
 
@@ -43,26 +48,33 @@ export default function DiagnosisFormNew({
     "Other",
   ];
 
-  // Map backend response -> frontend DiagnosisResponse
+  // Transform backend response to frontend DiagnosisResponse format
   const transformApiResponse = (
     apiResponse: TroubleshootResponse
   ): DiagnosisResponse => {
+    const stepCount = apiResponse.steps.length;
+    const estimatedTimeMinutes = Math.max(stepCount * 5, 10); // At least 10 minutes, 5 minutes per step
+    
     return {
       problem: `Issue with ${apiResponse.laptop_brand} ${apiResponse.laptop_model}`,
       cause: apiResponse.description,
-      solution: apiResponse.steps.map((step) => step.instruction),
-      estimatedTime: "30-60 minutes",
-      difficulty: "medium",
-      requiredTools: ["Basic tools"],
+      solution: apiResponse.steps
+        .sort((a, b) => a.step_number - b.step_number)
+        .map((step) => step.instruction),
+      estimatedTime: `${estimatedTimeMinutes}-${estimatedTimeMinutes + 30} minutes`,
+      difficulty: stepCount <= 3 ? "easy" : stepCount <= 6 ? "medium" : "hard",
+      requiredTools: ["Basic tools", "Screwdriver set"], // Default tools
       additionalTips: [
         "Follow the steps in order",
         "If issues persist, contact a technician",
+        "Make sure your laptop is powered off before starting",
       ],
-      warningLevel: "warning",
+      warningLevel: "warning" as const,
     };
   };
 
   const handleSubmit = async () => {
+    // Validate with zod
     const result = diagnosisSchema.safeParse({
       laptop_brand: laptopBrand,
       laptop_model: laptopModel,
@@ -84,16 +96,43 @@ export default function DiagnosisFormNew({
     setIsSubmitting(true);
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/troubleshoot/`, {
+      // Step 1: Create the problem
+      const createResponse = await axios.post(`${API_BASE_URL}/troubleshoot/`, {
         laptop_brand: laptopBrand,
         laptop_model: laptopModel,
-        description,
+        description: description,
       });
 
-      const diagnosisResponse = transformApiResponse(response.data);
+      const problemId = createResponse.data.id;
+      console.log("Created problem with ID:", problemId);
+
+      // Step 2: Fetch the problem with steps
+      const problemResponse = await axios.get(
+        `${API_BASE_URL}/troubleshoot/${problemId}`
+      );
+
+      const apiData: TroubleshootResponse = problemResponse.data;
+      console.log("API Data with steps:", apiData);
+
+      // Transform API response to expected format
+      const diagnosisResponse = transformApiResponse(apiData);
       onDiagnosisComplete(diagnosisResponse);
+
     } catch (error) {
       console.error("Error calling troubleshoot API:", error);
+      
+      // Set a more specific error message
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 404) {
+          setErrors({ general: "API endpoint not found. Please check your backend configuration." });
+        } else if (typeof error.response?.status === "number" && error.response.status >= 500) {
+          setErrors({ general: "Server error occurred. Please try again later." });
+        } else {
+          setErrors({ general: "Failed to get diagnosis. Please check your connection and try again." });
+        }
+      } else {
+        setErrors({ general: "An unexpected error occurred. Please try again." });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -111,16 +150,29 @@ export default function DiagnosisFormNew({
       </div>
 
       <div className="space-y-6">
+        {/* General Error Display */}
+        {errors.general && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            {errors.general}
+          </div>
+        )}
+
         {/* Laptop Brand */}
         <div>
           <select
             value={laptopBrand}
             onChange={(e) => setLaptopBrand(e.target.value)}
-            className="w-full px-4 py-4 text-gray-900 text-lg border-2 border-[#2218DE] rounded-xl focus:border-[#080198]"
+            className="w-full px-4 py-4 text-gray-900 text-lg border-2 border-[#2218DE] rounded-xl focus:border-[#080198] focus:ring-0 outline-none transition-colors"
           >
-            <option value="">Choose your laptop brand</option>
+            <option value="" className="bg-white/50 backdrop-blur-sm">
+              Choose your laptop brand
+            </option>
             {brands.map((brand) => (
-              <option key={brand} value={brand}>
+              <option
+                key={brand}
+                value={brand}
+                className="bg-transparent/50 backdrop-blur-sm"
+              >
                 {brand}
               </option>
             ))}
@@ -137,7 +189,7 @@ export default function DiagnosisFormNew({
             placeholder="Enter your laptop model"
             value={laptopModel}
             onChange={(e) => setLaptopModel(e.target.value)}
-            className="w-full px-4 py-4 text-gray-900 text-lg border-2 border-[#2218DE] rounded-xl focus:border-[#080198]"
+            className="w-full px-4 py-4 text-gray-900 text-lg border-2 border-[#2218DE] rounded-xl focus:border-[#080198] focus:ring-0 outline-none transition-colors"
           />
           {errors.laptop_model && (
             <p className="text-red-500 text-sm mt-1">{errors.laptop_model}</p>
@@ -151,7 +203,7 @@ export default function DiagnosisFormNew({
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={4}
-            className="w-full px-4 py-4 text-gray-900 text-lg border-2 border-[#2218DE] rounded-xl focus:border-[#080198]"
+            className="w-full px-4 py-4 text-gray-900 text-lg border-2 border-[#2218DE] rounded-xl focus:border-[#080198] focus:ring-0 outline-none transition-colors"
           />
           {errors.description && (
             <p className="text-red-500 text-sm mt-1">{errors.description}</p>
@@ -162,15 +214,15 @@ export default function DiagnosisFormNew({
         <button
           onClick={handleSubmit}
           disabled={isSubmitting}
-          className="w-full bg-[#2218DE] hover:bg-[#080198] disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-xl text-lg flex items-center justify-center shadow-lg"
+          className="w-full bg-[#2218DE] hover:bg-[#080198] disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-xl text-lg transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl"
         >
           {isSubmitting ? (
             <>
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-2"></div>
-              Analyzing...
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+              <span>Analyzing...</span>
             </>
           ) : (
-            "Run Diagnosis"
+            <span>Run Diagnosis</span>
           )}
         </button>
       </div>
