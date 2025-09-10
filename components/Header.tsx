@@ -87,7 +87,7 @@ export default function PageHeader() {
                   href="/about"
               className="px-4 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors"
                 >
-                  about
+                  About
                 </Link>
                 <Link
                   href="/login"

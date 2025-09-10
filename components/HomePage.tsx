@@ -2,10 +2,10 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Brain, Headphones, BookOpen } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import Image from "next/image";
+
 
 
 export default function HomePage() {
@@ -48,7 +48,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-gray-50">
       
       {isWakingUp && (
-        <div className="fixed top-4 right-4 bg-blue-100 border border-blue-400 text-blue-700 px-3 py-2 rounded z-50">
+        <div className="fixed top-20 right-4 bg-blue-100 border border-blue-400 text-blue-700 px-3 py-2 rounded z-50">
           Waking up backend service...
         </div>
       )}
@@ -62,13 +62,22 @@ export default function HomePage() {
           <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
             Run a quick diagnosis to get expert help immediately
           </p>
-          <button
-            // onClick={handleStartDiagnosis}
-            disabled={isLoading}
-            className="bg-[#2218DE] hover:bg-[#2218DE]/80 disabled:bg-gray-500 disabled:cursor-not-allowed text-white px-8 py-4 text-lg rounded-full transition-colors duration-200 font-medium"
-          >
-            {isLoading ? 'Loading...' : isAuthenticated ? 'Start Diagnosis' : 'Sign In to Start Diagnosis'}
-          </button>
+             {isAuthenticated ? (
+              <Link
+                href="/diagnose"
+                className="bg-[#2218DE] hover:bg-[#2218DE]/80 disabled:bg-gray-500 disabled:cursor-not-allowed text-white px-8 py-4 text-lg rounded-full transition-colors duration-200 font-medium"
+              >
+                Start Diagnosis
+              </Link>
+            ) : (
+              <Link
+                href="/login"
+                className="bg-[#2218DE] hover:bg-[#2218DE]/80 disabled:bg-gray-500 disabled:cursor-not-allowed text-white px-8 py-4 text-lg rounded-full transition-colors duration-200 font-medium"
+              >
+                Sign In to Start Diagnosis
+              </Link>
+            )}
+
         </div>
 
         
@@ -160,7 +169,38 @@ export default function HomePage() {
             </button>
           </div>
         </div>
+
+
       </div>
+        {/* Footer */}
+        <footer className="bg-[#2218DE] w-full text-white py-8 mt-16">
+          <div className="max-w-6xl mx-auto px-4 text-center">
+            <div className="flex flex-col md:flex-row justify-between items-center mb-6">
+              <div className="mb-4 md:mb-0">
+                <Link href="/" className="text-2xl font-bold">
+                  Laptop Medic
+                </Link>
+              </div>
+              <nav className="flex flex-wrap justify-center space-x-6">
+                <Link href="/about" className="hover:text-blue-200 transition-colors">
+                  About
+                </Link>
+                <Link href="/contact" className="hover:text-blue-200 transition-colors">
+                  Contact
+                </Link>
+                <Link href="/privacy" className="hover:text-blue-200 transition-colors">
+                  Privacy Policy
+                </Link>
+                <Link href="/terms" className="hover:text-blue-200 transition-colors">
+                  Terms of Service
+                </Link>
+              </nav>
+            </div>
+            <p className="text-sm text-blue-100">
+              &copy; {new Date().getFullYear()} Laptop Medic. All rights reserved.
+            </p>
+          </div>
+        </footer>
     </div>
   );
 }

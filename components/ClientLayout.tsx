@@ -3,9 +3,9 @@
 
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import PageHeader from '@/components/Header';
+import PageHeader from '@/components/Header'; // Changed from PageHeader to Header
 import DashboardHeader from '@/components/DashboardHeader';
-import AdminHeader from '@/components/AdminHeader';
+// import AdminHeader from '@/components/AdminHeader';
 import LoadingSpinner from "@/components/LoadingSpinner"
 
 interface ClientLayoutProps {
@@ -22,22 +22,22 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   }
 
   // Define route patterns
-  const isAuthPage = pathname?.startsWith('/login') || 
-                     pathname?.startsWith('/register') || 
+  const isAuthPage = pathname?.startsWith('/login') ||
+                     pathname?.startsWith('/register') ||
                      pathname?.startsWith('/forgot-password');
-  
-  const isPublicPage = pathname === '/' || 
-                       pathname?.startsWith('/about') || 
+
+  const isPublicPage = pathname === '/' ||
+                       pathname?.startsWith('/about') ||
                        pathname?.startsWith('/contact');
-  
-  const isDashboardPage = pathname?.startsWith('/dashboard') || 
-                          pathname?.startsWith('/diagnose') || 
-                          pathname?.startsWith('/history') || 
+
+  const isDashboardPage = pathname?.startsWith('/dashboard') ||
+                          pathname?.startsWith('/diagnose') ||
+                          pathname?.startsWith('/history') ||
                           pathname?.startsWith('/profile');
-  
-  const isAdminPage = pathname?.startsWith('/admin');
-  
-  const isEngineerPage = pathname?.startsWith('/engineer');
+
+  // const isAdminPage = pathname?.startsWith('/admin');
+
+  // const isEngineerPage = pathname?.startsWith('/engineer');
 
   // Render different headers based on the current page
   const renderHeader = () => {
@@ -45,26 +45,26 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
       // No header for auth pages
       return null;
     }
-    
+
     if (isPublicPage && !isAuthenticated) {
       // Public header for non-authenticated users
       return <PageHeader />;
     }
-    
-    if (isAuthenticated) {
-      if (isAdminPage && user?.role === 'admin') {
-        return <AdminHeader user={user} />;
-      }
-      
-      if (isEngineerPage && (user?.role === 'engineer' || user?.role === 'admin')) {
-        return <AdminHeader user={user} />; // You can create separate EngineerHeader if needed
-      }
-      
+
+    // if (isAuthenticated) {
+    //   if (isAdminPage && user?.role === 'admin') {
+    //     return <AdminHeader user={user} />;
+    //   }
+    //
+    //   if (isEngineerPage && (user?.role === 'engineer' || user?.role === 'admin')) {
+    //     return <AdminHeader user={user} />; // You can create separate EngineerHeader if needed
+    //   }
+    //
       if (isDashboardPage || isPublicPage) {
         return <DashboardHeader />;
       }
-    }
-    
+    // }
+
     // Fallback to public header
     return <PageHeader />;
   };
@@ -72,7 +72,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   return (
     <>
       {renderHeader()}
-      <main className={isAuthPage ? '' : 'min-h-screen'}>
+      <main className={pathname?.startsWith('/login') || pathname?.startsWith('/register') || pathname?.startsWith('/forgot-password') ? '' : 'min-h-screen'}>
         {children}
       </main>
     </>
