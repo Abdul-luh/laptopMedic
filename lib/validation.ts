@@ -2,13 +2,11 @@
 import { z } from "zod";
 
 export const diagnosisSchema = z.object({
-  brand: z.string().min(1, "Please select a laptop brand"),
-  issueCategory: z.string().min(1, "Please select an issue category"),
-  symptoms: z.array(z.string()).min(1, "Please select at least one symptom"),
+  laptop_brand: z.string().min(1, "Please select a laptop brand"),
+  laptop_model: z.string().min(1, "Please enter your laptop model"),
   description: z
     .string()
     .min(10, "Please provide a detailed description (minimum 10 characters)"),
-  urgency: z.enum(["low", "medium", "high"]),
 });
 
 export const contactSchema = z.object({
