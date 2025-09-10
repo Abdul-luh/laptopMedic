@@ -4,7 +4,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import Image from "next/image";
+import Logo from "./logo";
 
 export default function PageHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -24,30 +24,10 @@ export default function PageHeader() {
     return (
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            <Link
-              href="/"
-              className="flex items-center space-x-2 text-decoration-none"
-            >
-              <svg
-                className="w-8 h-8 text-blue-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                />
-              </svg>
-              <h1 className="text-xl font-bold text-gray-800">Laptop Medic</h1>
-            </Link>
-            <div className="animate-pulse">
-              <div className="h-4 bg-gray-200 rounded w-24"></div>
-            </div>
-          </div>
+          <Logo />
+        </div>
+        <div className="flex items-center justify-center h-20">
+          <span className="text-gray-500">Loading...</span>
         </div>
       </header>
     );
@@ -57,31 +37,16 @@ export default function PageHeader() {
     <header className="bg-white shadow-sm border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-20">
-          <Link
-            href="/"
-            className="flex items-center space-x-2 text-decoration-none"
-          >
-            <Image height={500} width={500} src="/laptop-medic-logo.svg" alt="Logo" className="w-16 h-16"/>
-          </Link>
+         <Logo />
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-1">
-            <Link
-              href="/"
-              className="px-4 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors"
-            >
-              Home
-            </Link>
+            
             
             {isAuthenticated ? (
               // Navigation for authenticated users
               <>
-                <Link
-                  href="/dashboard"
-                  className="px-4 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors"
-                >
-                  Dashboard
-                </Link>
+                
                 <Link
                   href="/diagnose"
                   className="px-4 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors"
@@ -117,11 +82,12 @@ export default function PageHeader() {
             ) : (
               // Navigation for non-authenticated users
               <>
+                
                 <Link
-                  href="/contact"
-                  className="px-4 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors"
+                  href="/about"
+              className="px-4 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors"
                 >
-                  Contact
+                  about
                 </Link>
                 <Link
                   href="/login"
@@ -186,11 +152,11 @@ export default function PageHeader() {
                 // Mobile navigation for authenticated users
                 <>
                   <Link
-                    href="/dashboard"
+                    href="/about"
                     className="block px-4 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    Dashboard
+                    About
                   </Link>
                   <Link
                     href="/diagnose"
@@ -233,11 +199,11 @@ export default function PageHeader() {
                 // Mobile navigation for non-authenticated users
                 <>
                   <Link
-                    href="/contact"
+                    href="/about"
                     className="block px-4 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    Contact
+                    About
                   </Link>
                   <div className="border-t border-gray-200 pt-2 mt-2">
                     <Link

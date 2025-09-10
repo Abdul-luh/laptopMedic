@@ -8,6 +8,7 @@ import { z } from "zod";
 import { loginSchema } from "@/lib/validation";
 import { useAuth } from "@/contexts/AuthContext";
 import Image from "next/image";
+import Logo from "@/components/logo";
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
@@ -86,22 +87,7 @@ useEffect(() => {
       <div className="w-full lg:w-1/2 flex flex-col justify-center px-12 py-12">
         {/* Logo */}
         <div className="flex items-center mb-12">
-          <div className="w-12 h-12 flex items-center justify-center rounded-lg border-2 border-blue-600 mr-3">
-            <svg
-              className="w-6 h-6 text-blue-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-              />
-            </svg>
-          </div>
-          <span className="text-lg font-semibold text-gray-800">Laptop Medic</span>
+         <Logo />
         </div>
 
         {/* Form */}
@@ -113,7 +99,7 @@ useEffect(() => {
               type="email"
               value={formData.email}
               onChange={(e) => handleInputChange("email", e.target.value)}
-              className="w-full px-4 py-3 border-2 border-blue-600 rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className="w-full px-4 py-3 border-2 border-[#2218DE] rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
               placeholder="Enter your email"
               required
             />
@@ -128,7 +114,7 @@ useEffect(() => {
               type={showPassword ? "text" : "password"}
               value={formData.password}
               onChange={(e) => handleInputChange("password", e.target.value)}
-              className="w-full px-4 py-3 border-2 border-blue-600 rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className="w-full px-4 py-3 border-2 border-[#2218DE] rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
               placeholder="Enter your password"
               required
             />
@@ -147,7 +133,7 @@ useEffect(() => {
           <div className="flex justify-end">
             <Link
               href="/forgot-password"
-              className="text-sm text-blue-600 hover:underline"
+              className="text-sm text-[#2218DE]0 hover:underline"
             >
               Forgot Password?
             </Link>
@@ -157,7 +143,7 @@ useEffect(() => {
 <button
   type="submit"
   disabled={isLoading}
-  className="w-full py-3 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-semibold transition"
+  className="w-full py-3 rounded-full bg-[#2218DE] hover:bg-blue-700 text-white font-semibold transition"
 >
   {isLoading ? "Signing in..." : "Log in"}
 </button>
@@ -186,7 +172,7 @@ useEffect(() => {
 
           <p className="text-center text-gray-600">
             Don’t have an account?{" "}
-            <Link href="/register" className="text-blue-600 hover:underline">
+            <Link href="/register" className="text-[#2218DE] hover:underline">
               Sign up
             </Link>
           </p>
@@ -194,7 +180,7 @@ useEffect(() => {
       </div>
 
       {/* Right side: Illustration */}
-      <section className="lg:flex w-1/2 bg-gray-50 items-center justify-center ">
+      <section className="lg:flex min-w-1/2 bg-gray-50 items-center justify-center ">
         <Image
           height={500}
           width={500}

@@ -8,6 +8,7 @@ import axios from "axios";
 import { RegisterRequest } from "@/types";
 import { registerSchema } from "@/lib/validation";
 import Image from "next/image";
+import Logo from "@/components/logo";
 
 type RegisterFormData = z.infer<typeof registerSchema>;
 const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -170,23 +171,8 @@ export default function RegisterPage() {
         {/* Left side: Form */}
         <div className="w-full lg:w-1/2 flex flex-col justify-center px-12 py-12">
           {/* Logo */}
-          <div className="flex items-center mb-12">
-            <div className="w-12 h-12 flex items-center justify-center rounded-lg border-2 border-blue-600 mr-3">
-              <svg
-                className="w-6 h-6 text-blue-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                />
-              </svg>
-            </div>
-            <span className="text-lg font-semibold text-gray-800">Laptop Medic</span>
+          <div className="flex items-center justify-center md:justify-start mb-12">
+            <Logo />
           </div>
 
           {/* General Error Message */}
@@ -219,7 +205,7 @@ export default function RegisterPage() {
                 type="text"
                 value={formData.name || ""}
                 onChange={(e) => handleInputChange("name", e.target.value)}
-                className="w-full px-4 py-3 border-2 border-blue-600 rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                className="w-full px-4 py-3 border-2 border-[#2218DE] rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
                 placeholder="Full name"
                 required
               />
@@ -235,7 +221,7 @@ export default function RegisterPage() {
                 type="email"
                 value={formData.email || ""}
                 onChange={(e) => handleInputChange("email", e.target.value)}
-                className="w-full px-4 py-3 border-2 border-blue-600 rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                className="w-full px-4 py-3 border-2 border-[#2218DE] rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
                 placeholder="Email Address"
                 required
               />
@@ -251,7 +237,7 @@ export default function RegisterPage() {
                 type={showPassword ? "text" : "password"}
                 value={formData.password || ""}
                 onChange={(e) => handleInputChange("password", e.target.value)}
-                className="w-full px-4 py-3 border-2 border-blue-600 rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                className="w-full px-4 py-3 border-2 border-[#2218DE] rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
                 placeholder="Password"
                 required
               />
@@ -274,7 +260,7 @@ export default function RegisterPage() {
                 type={showConfirmPassword ? "text" : "password"}
                 value={formData.confirmPassword || ""}
                 onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
-                className="w-full px-4 py-3 border-2 border-blue-600 rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                className="w-full px-4 py-3 border-2 border-[#2218DE] rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
                 placeholder="Confirm Password"
                 required
               />
@@ -296,7 +282,7 @@ export default function RegisterPage() {
                 id="role"
                 value={formData.role || "user"}
                 onChange={(e) => handleInputChange("role", e.target.value)}
-                className="w-full px-4 py-3 border-2 border-blue-600 rounded-full text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-600 appearance-none bg-white"
+                className="w-full px-4 py-3 border-2 border-[#2218DE] rounded-full text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-600 appearance-none bg-white"
               >
                 <option value="user">Regular User</option>
                 <option value="engineer">Engineer</option>
@@ -326,14 +312,14 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 rounded-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold transition text-lg"
+              className="w-full py-3 rounded-full bg-[#2218DE] hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold transition text-lg"
             >
               {isLoading ? "Creating Account..." : "Sign up"}
             </button>
 
             <p className="text-center text-gray-600">
               Already have an account?{" "}
-              <Link href="/login" className="text-blue-600 hover:underline">
+              <Link href="/login" className="text-[#2218DE] hover:underline">
                 Sign in
               </Link>
             </p>
@@ -341,7 +327,7 @@ export default function RegisterPage() {
         </div>
 
         {/* Right side: Illustration */}
-        <section className="lg:flex w-1/2 bg-gray-50 items-center justify-center">
+        <section className="md:flex min-w-1/2 bg-gray-50 items-center justify-center">
           <Image
             height={500}
             width={500}
