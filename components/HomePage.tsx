@@ -5,7 +5,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import Image from "next/image";
-
+import { motion } from "framer-motion";
 
 
 export default function HomePage() {
@@ -44,24 +44,45 @@ export default function HomePage() {
   isLoading, 
   isAuthenticated } = useAuth();
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.2,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" as const } },
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       
       {isWakingUp && (
-        <div className="fixed top-20 right-4 bg-blue-100 border border-blue-400 text-blue-700 px-3 py-2 rounded z-50">
+        <div className="fixed top-24 right-4 bg-blue-100 border border-[#2218DE] text-[#2218DE] px-3 py-2 rounded-lg z-50 shadow-lg animate-pulse">
           Waking up backend service...
         </div>
       )}
 
       <div className="max-w-6xl mx-auto px-4 py-12">
         {/* Hero Section */}
-        <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-6xl font-bold text-[#2218DE] mb-6">
+        <motion.div
+          className="text-center flex flex-col justify-center items-center mb-16 min-h-[75vh] md:min-h-[40vh]"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          <motion.h1 variants={itemVariants} className="text-5xl md:text-7xl font-extrabold text-[#2218DE] mb-6">
             Is your laptop acting up?
-          </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+          </motion.h1>
+          <motion.p variants={itemVariants} className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
             Run a quick diagnosis to get expert help immediately
-          </p>
+          </motion.p>
+          <motion.div variants={itemVariants}>
              {isAuthenticated ? (
               <Link
                 href="/diagnose"
@@ -77,14 +98,20 @@ export default function HomePage() {
                 Sign In to Start Diagnosis
               </Link>
             )}
-
-        </div>
+          </motion.div>
+        </motion.div>
 
         
 {/* Feature Cards */}
-<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+<motion.div
+  className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16"
+  variants={containerVariants}
+  initial="hidden"
+  whileInView="visible"
+  viewport={{ once: true, amount: 0.3 }}
+>
   {/* AI-Powered Diagnosis */}
-  <div className="border-[#2218DE] border-2 p-8 rounded-lg hover:shadow-lg transition-shadow duration-200 h-full bg-white">
+  <motion.div variants={itemVariants} className="border-[#2218DE] border-2 p-8 rounded-lg hover:shadow-lg transition-shadow duration-200 h-full bg-white">
     <div className="text-center">
       <div className="relative w-32 h-32 mx-auto mb-4">
         <Image
@@ -102,10 +129,10 @@ export default function HomePage() {
         accurate diagnoses with step-by-step solutions.
       </p>
     </div>
-  </div>
+  </motion.div>
 
   {/* Contact Technician */}
-  <div className="border-[#2218DE] border-2 p-8 rounded-lg hover:shadow-lg transition-shadow duration-200 h-full bg-white">
+  <motion.div variants={itemVariants} className="border-[#2218DE] border-2 p-8 rounded-lg hover:shadow-lg transition-shadow duration-200 h-full bg-white">
     <div className="text-center">
       <div className="relative w-32 h-32 mx-auto mb-4">
         <Image
@@ -123,10 +150,10 @@ export default function HomePage() {
         can provide expert assistance and repairs.
       </p>
     </div>
-  </div>
+  </motion.div>
 
   {/* Learn about Common Issues */}
-  <div className="border-[#2218DE] border-2 p-8 rounded-lg hover:shadow-lg transition-shadow duration-200 h-full bg-white">
+  <motion.div variants={itemVariants} className="border-[#2218DE] border-2 p-8 rounded-lg hover:shadow-lg transition-shadow duration-200 h-full bg-white">
     <div className="text-center">
       <div className="relative w-32 h-32 mx-auto mb-4">
         <Image
@@ -144,16 +171,22 @@ export default function HomePage() {
         and preventive maintenance tips.
       </p>
     </div>
-  </div>
-</div>
+  </motion.div>
+</motion.div>
 
 
         {/* Quick Actions */}
-        <div className="text-center">
-          <h2 className="text-3xl font-bold mb-8 text-[#2218DE]">
+        <motion.div
+          className="text-center"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.5 }}
+          variants={containerVariants}
+        >
+          <motion.h2 variants={itemVariants} className="text-3xl font-bold mb-8 text-[#2218DE]">
             Quick Actions
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          </motion.h2>
+          <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Link href="/history">
               <button className="w-full py-6 border-2 border-gray-300 text-gray-700 hover:border-blue-500 hover:text-blue-600 rounded-lg transition-colors duration-200 font-medium">
                 View Previous Diagnoses
@@ -167,8 +200,8 @@ export default function HomePage() {
             <button className="w-full py-6 border-2 border-gray-300 text-gray-700 hover:border-blue-500 hover:text-blue-600 rounded-lg transition-colors duration-200 font-medium">
               Learn about Common Issues
             </button>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
 
       </div>
