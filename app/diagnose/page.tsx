@@ -76,7 +76,7 @@ export default function DiagnosePage() {
               onContactTechnician={handleContactTechnician}
             />
           ) : (
-            <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div className="grid lg:grid-cols-2 gap-12 items-center max-w-full mx-auto px-4 sm:px-0">
               {/* Left side - Form */}
               <div className="order-2 lg:order-1">
                 <DiagnosisFormNew
@@ -85,8 +85,8 @@ export default function DiagnosePage() {
               </div>
 
               {/* Right side - Hero Image */}
-              <div className="order-1 lg:order-2 flex justify-center">
-                <div className="relative">
+              <div className="order-1 lg:order-2 flex justify-center items-center w-full">
+                <div className="relative ">
                   <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full blur-3xl opacity-30 animate-pulse"></div>
                   <div className="relative bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-2xl">
                     <div className="w-80 h-80 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center">

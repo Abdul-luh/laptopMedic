@@ -59,7 +59,6 @@ export default function HistoryPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <PageHeader />
         <div className="max-w-7xl mx-auto py-12 px-4">
           <h1 className="text-3xl font-bold text-center">Loading history...</h1>
         </div>
@@ -69,7 +68,6 @@ export default function HistoryPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <PageHeader />
       <div className="max-w-7xl mx-auto py-12 px-4">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold flex items-center text-gray-800">
