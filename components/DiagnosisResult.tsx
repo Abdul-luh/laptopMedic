@@ -271,7 +271,7 @@ export default function DiagnosisResult({
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-white p-4">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header with Logo */}
-        <div className="flex items-center justify-between mb-8">
+        {/* <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-3">
             <div
               className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg"
@@ -304,7 +304,7 @@ export default function DiagnosisResult({
               Account
             </span>
           </div>
-        </div>
+        </div> */}
 
         {/* Device Info Card */}
         <div className="bg-white rounded-2xl p-6 shadow-md border border-gray-200">
