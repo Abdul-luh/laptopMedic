@@ -4,8 +4,6 @@
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import PageHeader from '@/components/Header'; // Changed from PageHeader to Header
-import DashboardHeader from '@/components/DashboardHeader';
-// import AdminHeader from '@/components/AdminHeader';
 import LoadingSpinner from "@/components/LoadingSpinner"
 
 interface ClientLayoutProps {
