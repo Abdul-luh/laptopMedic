@@ -4,14 +4,31 @@
 import React, { useState } from "react";
 import DiagnosisFormNew from "../../components/DiagnoseForm";
 import DiagnosisResult from "../../components/DiagnosisResult";
-import { DiagnosisResponse } from "../../types";
 import { useRouter } from "next/navigation";
 
+// This type should ideally be in a shared `types/index.ts` file.
+// It represents the raw data structure from the API and is compatible
+// with the `DiagnosisData` interface in `DiagnosisResult.tsx`.
+interface DiagnosisData {
+  id: number;
+  laptop_brand: string;
+  laptop_model: string;
+  description: string;
+  created_at: string;
+  solved: boolean;
+  steps: {
+    id: number;
+    step_number: number;
+    instruction: string;
+    completed: boolean;
+  }[];
+}
+
 export default function DiagnosePage() {
-  const [diagnosis, setDiagnosis] = useState<DiagnosisResponse | null>(null);
+  const [diagnosis, setDiagnosis] = useState<DiagnosisData | null>(null);
   const router = useRouter();
 
-  const handleDiagnosisComplete = (response: DiagnosisResponse) => {
+  const handleDiagnosisComplete = (response: DiagnosisData) => {
     setDiagnosis(response);
     // Save to session storage instead of localStorage (artifacts don't support localStorage)
     try {
@@ -27,7 +44,7 @@ export default function DiagnosePage() {
         "diagnosisHistory",
         JSON.stringify(history.slice(0, 10))
       );
-    } catch (error) {
+    } catch {
       console.warn("Session storage not available, skipping history save");
     }
   };
@@ -54,7 +71,9 @@ export default function DiagnosePage() {
         <div className="max-w-7xl mx-auto mt-20">
           {diagnosis ? (
             <DiagnosisResult
-              problemId={Number(diagnosis?.problem)}
+              diagnosis={diagnosis}
+              onNewDiagnosis={handleNewDiagnosis}
+              onContactTechnician={handleContactTechnician}
             />
           ) : (
             <div className="grid lg:grid-cols-2 gap-12 items-center">

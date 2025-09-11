@@ -1,8 +1,6 @@
-
 // components/DiagnoseForm.tsx
 "use client";
 import { useState } from "react";
-import { DiagnosisResponse } from "../types";
 import axios from "axios";
 import { diagnosisSchema } from "@/lib/validation";
 
@@ -29,7 +27,7 @@ interface TroubleshootResponse {
 export default function DiagnosisFormNew({
   onDiagnosisComplete,
 }: {
-  onDiagnosisComplete: (response: DiagnosisResponse) => void;
+  onDiagnosisComplete: (response: TroubleshootResponse) => void;
 }) {
   const [laptopBrand, setLaptopBrand] = useState("");
   const [laptopModel, setLaptopModel] = useState("");
@@ -47,31 +45,6 @@ export default function DiagnosisFormNew({
     "MSI",
     "Other",
   ];
-
-  // Transform backend response to frontend DiagnosisResponse format
-  const transformApiResponse = (
-    apiResponse: TroubleshootResponse
-  ): DiagnosisResponse => {
-    const stepCount = apiResponse.steps.length;
-    const estimatedTimeMinutes = Math.max(stepCount * 5, 10); // At least 10 minutes, 5 minutes per step
-    
-    return {
-      problem: `Issue with ${apiResponse.laptop_brand} ${apiResponse.laptop_model}`,
-      cause: apiResponse.description,
-      solution: apiResponse.steps
-        .sort((a, b) => a.step_number - b.step_number)
-        .map((step) => step.instruction),
-      estimatedTime: `${estimatedTimeMinutes}-${estimatedTimeMinutes + 30} minutes`,
-      difficulty: stepCount <= 3 ? "easy" : stepCount <= 6 ? "medium" : "hard",
-      requiredTools: ["Basic tools", "Screwdriver set"], // Default tools
-      additionalTips: [
-        "Follow the steps in order",
-        "If issues persist, contact a technician",
-        "Make sure your laptop is powered off before starting",
-      ],
-      warningLevel: "warning" as const,
-    };
-  };
 
   const handleSubmit = async () => {
     // Validate with zod
@@ -114,24 +87,31 @@ export default function DiagnosisFormNew({
       const apiData: TroubleshootResponse = problemResponse.data;
       console.log("API Data with steps:", apiData);
 
-      // Transform API response to expected format
-      const diagnosisResponse = transformApiResponse(apiData);
-      onDiagnosisComplete(diagnosisResponse);
-
+      onDiagnosisComplete(apiData);
     } catch (error) {
       console.error("Error calling troubleshoot API:", error);
-      
+
       // Set a more specific error message
       if (axios.isAxiosError(error)) {
         if (error.response?.status === 404) {
-          setErrors({ general: "API endpoint not found. Please check your backend configuration." });
-        } else if (typeof error.response?.status === "number" && error.response.status >= 500) {
-          setErrors({ general: "Server error occurred. Please try again later." });
+          setErrors({
+            general:
+              "API endpoint not found. Please check your backend configuration.",
+          });
+        } else if ((error.response?.status ?? 0) >= 500) {
+          setErrors({
+            general: "Server error occurred. Please try again later.",
+          });
         } else {
-          setErrors({ general: "Failed to get diagnosis. Please check your connection and try again." });
+          setErrors({
+            general:
+              "Failed to get diagnosis. Please check your connection and try again.",
+          });
         }
       } else {
-        setErrors({ general: "An unexpected error occurred. Please try again." });
+        setErrors({
+          general: "An unexpected error occurred. Please try again.",
+        });
       }
     } finally {
       setIsSubmitting(false);
