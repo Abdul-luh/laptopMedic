@@ -81,7 +81,7 @@ export default function DiagnosisFormNew({
 
       // Step 2: Fetch the problem with steps
       const problemResponse = await axios.get(
-        `${API_BASE_URL}/troubleshoot/${problemId}`
+        `${API_BASE_URL}/troubleshoot/problems/${problemId}`
       );
 
       const apiData: TroubleshootResponse = problemResponse.data;
@@ -119,7 +119,7 @@ export default function DiagnosisFormNew({
   };
 
   return (
-    <div className="space-y-8 mt-16">
+    <section className="space-y-8 mt-16 w-full mx-auto">
       <div>
         <h1 className="text-4xl lg:text-5xl font-bold text-[#2218DE] mb-4">
           Start a Diagnosis
@@ -206,6 +206,6 @@ export default function DiagnosisFormNew({
           )}
         </button>
       </div>
-    </div>
+    </section>
   );
 }

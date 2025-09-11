@@ -41,7 +41,7 @@ export default function HomePage() {
 
   const { 
   // handleStartDiagnosis, 
-  isLoading, 
+  // isLoading, 
   isAuthenticated } = useAuth();
 
   const containerVariants = {

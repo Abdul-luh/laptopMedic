@@ -213,4 +213,53 @@ async login(email: string, password: string) {
   getToken(): string | null {
     return this.getAuthData().token;
   },
+};let logoutTimer: NodeJS.Timeout | null = null;
+
+const startLogoutTimer = () => {
+  if (logoutTimer) {
+    clearTimeout(logoutTimer);
+  }
+  logoutTimer = setTimeout(() => {
+    authUtils.logout();
+    window.location.href = "/login?sessionExpired=true";
+  }, 15 * 60 * 1000); // 15 minutes
 };
+
+const resetLogoutTimer = () => {
+  if (authUtils.isAuthenticated()) {
+    startLogoutTimer();
+  }
+};
+
+// Initialize timer on page load if already logged in
+if (typeof window !== 'undefined') {
+  window.onload = resetLogoutTimer;
+  window.onmousemove = resetLogoutTimer;
+  window.onkeypress = resetLogoutTimer;
+  window.onclick = resetLogoutTimer;
+  window.onscroll = resetLogoutTimer;
+}
+
+// Enhance login and logout to manage the timer
+const originalLogin = authUtils.login;
+authUtils.login = async (email, password) => {
+  const result = await originalLogin(email, password);
+  if (result.success) {
+    startLogoutTimer();
+  }
+  return result;
+};
+
+const originalLogout = authUtils.logout;
+authUtils.logout = () => {
+  originalLogout();
+  if (logoutTimer) {
+    clearTimeout(logoutTimer);
+    logoutTimer = null;
+  }
+};
+
+// Also start timer if user is already logged in when the script loads
+if (authUtils.isAuthenticated()) {
+  startLogoutTimer();
+}
