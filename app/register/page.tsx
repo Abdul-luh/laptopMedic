@@ -10,13 +10,18 @@ import { registerSchema } from "@/lib/validation";
 import Image from "next/image";
 import Logo from "@/components/logo";
 
+
 type RegisterFormData = z.infer<typeof registerSchema>;
 const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState<Partial<RegisterFormData>>({
     role: "user",
+    service_time: undefined, // Add new fields
+    picture_url: undefined, // Add new fields
+    location: undefined, // Add location to state
   });
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -39,17 +44,16 @@ export default function RegisterPage() {
 
     try {
       // Validate form data
-      const validatedData = registerSchema.parse(formData);
+      const validatedData = registerSchema.parse(formData); // Prepare data for backend
 
-      // Prepare data for backend
       const registerData: RegisterRequest = {
         name: validatedData.name,
         email: validatedData.email,
         password: validatedData.password,
         role: validatedData.role,
-      };
+        location: validatedData.location, // Include location in the payload
+      }; // Call your backend API using axios
 
-      // Call your backend API using axios
       const response = await axios.post(
         `${baseURL}/auth/register`,
         registerData,
@@ -61,11 +65,10 @@ export default function RegisterPage() {
         }
       );
 
-      console.log(response)
+      console.log(response);
 
       if (response.status === 200 || response.status === 201) {
-        setRegistrationSuccess(true);
-        // Optionally redirect to login page after success
+        setRegistrationSuccess(true); // Optionally redirect to login page after success
         setTimeout(() => {
           router.push("/login");
         }, 2000);
@@ -76,15 +79,16 @@ export default function RegisterPage() {
         if (error.response) {
           // Server responded with error status
           const result = error.response.data;
-          
           if (result.message) {
             setErrors({ general: result.message });
           } else if (result.errors && Array.isArray(result.errors)) {
             // Handle field-specific errors from backend
             const backendErrors: Record<string, string> = {};
-            result.errors.forEach((error: { field: string; message: string }) => {
-              backendErrors[error.field] = error.message;
-            });
+            result.errors.forEach(
+              (error: { field: string; message: string }) => {
+                backendErrors[error.field] = error.message;
+              }
+            );
             setErrors(backendErrors);
           } else {
             setErrors({
@@ -94,7 +98,8 @@ export default function RegisterPage() {
         } else if (error.request) {
           // Network error
           setErrors({
-            general: "Network error. Please check your connection and try again.",
+            general:
+              "Network error. Please check your connection and try again.",
           });
         } else {
           // Other axios error
@@ -110,7 +115,9 @@ export default function RegisterPage() {
       ) {
         // Handle Zod validation errors
         const validationErrors: Record<string, string> = {};
-        (error as { errors: Array<{ path: [string]; message: string }> }).errors.forEach((err) => {
+        (
+          error as { errors: Array<{ path: [string]; message: string }> }
+        ).errors.forEach((err) => {
           validationErrors[err.path[0]] = err.message;
         });
         setErrors(validationErrors);
@@ -124,7 +131,6 @@ export default function RegisterPage() {
       setIsLoading(false);
     }
   };
-
   if (registrationSuccess) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
@@ -167,7 +173,6 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen flex bg-gray-50">
       <div className="flex flex-col-reverse md:flex-row max-w-4xl mx-auto my-12 overflow-hidden items-center">
-        
         {/* Left side: Form */}
         <div className="w-full lg:w-1/2 flex flex-col justify-center px-12 py-12">
           {/* Logo */}
@@ -197,7 +202,6 @@ export default function RegisterPage() {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="max-w-md w-full space-y-6">
-            
             {/* Full Name */}
             <div>
               <input
@@ -259,7 +263,9 @@ export default function RegisterPage() {
                 id="confirmPassword"
                 type={showConfirmPassword ? "text" : "password"}
                 value={formData.confirmPassword || ""}
-                onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("confirmPassword", e.target.value)
+                }
                 className="w-full px-4 py-3 border-2 border-[#2218DE] rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
                 placeholder="Confirm Password"
                 required
@@ -272,7 +278,9 @@ export default function RegisterPage() {
                 {showConfirmPassword ? "🙈" : "👁️"}
               </button>
               {errors.confirmPassword && (
-                <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.confirmPassword}
+                </p>
               )}
             </div>
 
@@ -306,6 +314,70 @@ export default function RegisterPage() {
                 <p className="mt-1 text-sm text-red-600">{errors.role}</p>
               )}
             </div>
+
+            {formData.role === "engineer" && (
+              <>
+                {/* Service Time */}
+                <div>
+                  <input
+                    id="service_time"
+                    type="number"
+                    value={formData.service_time || ""}
+                    onChange={(e) =>
+                      handleInputChange("service_time", e.target.value)
+                    }
+                    className="w-full px-4 py-3 border-2 border-[#2218DE] rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    placeholder="Service Time (hours)"
+                    required
+                  />
+                  {errors.service_time && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.service_time}
+                    </p>
+                  )}
+                </div>
+
+                {/* Picture URL */}
+                <div>
+                  <input
+                    id="picture_url"
+                    type="url"
+                    value={formData.picture_url || ""}
+                    onChange={(e) =>
+                      handleInputChange("picture_url", e.target.value)
+                    }
+                    className="w-full px-4 py-3 border-2 border-[#2218DE] rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    placeholder="Profile Picture URL"
+                    required
+                  />
+                  {errors.picture_url && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.picture_url}
+                    </p>
+                  )}
+                </div>
+
+                {/* Location */}
+                <div>
+                  <input
+                    id="location"
+                    type="text"
+                    value={formData.location || ""}
+                    onChange={(e) =>
+                      handleInputChange("location", e.target.value)
+                    }
+                    className="w-full px-4 py-3 border-2 border-[#2218DE] rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    placeholder="Location"
+                    required
+                  />
+                  {errors.location && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.location}
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
 
             {/* Submit Button */}
             <button

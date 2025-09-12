@@ -19,18 +19,34 @@ export const contactSchema = z.object({
 });
 
 // Validation schema matching backend requirements
-const registerSchema = z
-  .object({
-    name: z.string().min(2, "Name must be at least 2 characters"),
-    email: z.string().email("Please enter a valid email address"),
-    password: z.string().min(8, "Password must be at least 8 characters"),
-    confirmPassword: z.string(),
-    role: z.enum(["user", "engineer", "admin"]).default("user"),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
+// lib/validation.ts (Modified)
+
+const registerSchema = z.object({
+  name: z.string().min(1, "Full name is required").max(100),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(8, "Password must be at least 8 characters long"),
+  confirmPassword: z.string(),
+  role: z.enum(["user", "engineer"]),
+  service_time: z.coerce.number().min(0, "Service time cannot be negative").optional(),
+  picture_url: z.string().url("Invalid URL").optional(),
+}).refine(
+  (data) => {
+    if (data.role === "engineer") {
+      return data.service_time !== undefined && data.picture_url !== undefined && datalocation;
+    }
+    return true;
+  },
+  {
+    message: "Engineer registration requires service time and a picture URL.",
+    path: ["role"], // This will associate the error with the role field
+  }
+).refine(
+  (data) => data.password === data.confirmPassword,
+  {
     message: "Passwords don't match",
     path: ["confirmPassword"],
-  });
+  }
+);
 
   // Login validation schema
 const loginSchema = z.object({
