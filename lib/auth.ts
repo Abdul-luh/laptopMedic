@@ -222,7 +222,7 @@ const startLogoutTimer = () => {
   logoutTimer = setTimeout(() => {
     authUtils.logout();
     window.location.href = "/login?sessionExpired=true";
-  }, 15 * 60 * 1000); // 15 minutes
+  }, 60 * 60 * 1000); // 1 hour
 };
 
 const resetLogoutTimer = () => {

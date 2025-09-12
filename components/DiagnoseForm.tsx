@@ -69,12 +69,21 @@ export default function DiagnosisFormNew({
     setIsSubmitting(true);
 
     try {
+      const token = localStorage.getItem("authToken");
+      if (!token) throw new Error("No auth token found. Please login first.");
+      
       // Step 1: Create the problem
       const createResponse = await axios.post(`${API_BASE_URL}/troubleshoot/`, {
         laptop_brand: laptopBrand,
         laptop_model: laptopModel,
         description: description,
-      });
+      },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,  // 🔥 add token here
+          },
+        }
+  );
 
       const problemId = createResponse.data.id;
       console.log("Created problem with ID:", problemId);

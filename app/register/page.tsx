@@ -284,9 +284,8 @@ export default function RegisterPage() {
                 onChange={(e) => handleInputChange("role", e.target.value)}
                 className="w-full px-4 py-3 border-2 border-[#2218DE] rounded-full text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-600 appearance-none bg-white"
               >
-                <option value="user">Regular User</option>
+                <option value="user">User</option>
                 <option value="engineer">Engineer</option>
-                <option value="admin">Admin</option>
               </select>
               <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
                 <svg

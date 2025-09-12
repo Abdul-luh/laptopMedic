@@ -1,5 +1,6 @@
-"use client"
+"use client";
 import React, { useState, useEffect } from "react";
+import axios, {AxiosError} from "axios";
 import {
   Clock,
   Monitor,
@@ -17,14 +18,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 
-// Mock data structure matching your actual data
-interface DiagnosisStep {
-  id: number;
-  step_number: number;
-  instruction: string;
-  completed: boolean;
-}
-
+// API data structure based on your backend response
 interface HistoryItem {
   id: number;
   laptop_brand: string;
@@ -32,12 +26,12 @@ interface HistoryItem {
   description: string;
   created_at: string;
   solved: boolean;
-  steps: DiagnosisStep[];
 }
 
 export default function HistoryPage() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<
     "all" | "solved" | "pending"
@@ -45,71 +39,44 @@ export default function HistoryPage() {
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  // Mock data for demo
-  const mockHistory: HistoryItem[] = [
-    {
-      id: 18,
-      laptop_brand: "Dell",
-      laptop_model: "XPS 15",
-      description: "goes off abruptly",
-      created_at: "2025-09-11T03:33:49.438967",
-      solved: false,
-      steps: Array(26)
-        .fill(null)
-        .map((_, i) => ({
-          id: 217 + i,
-          step_number: i + 1,
-          instruction: `Step ${i + 1} instruction`,
-          completed: Math.random() > 0.7,
-        })),
-    },
-    {
-      id: 17,
-      laptop_brand: "HP",
-      laptop_model: "Pavilion 14",
-      description: "overheating",
-      created_at: "2025-06-01T10:20:30.123456",
-      solved: true,
-      steps: Array(12)
-        .fill(null)
-        .map((_, i) => ({
-          id: 300 + i,
-          step_number: i + 1,
-          instruction: `Cooling step ${i + 1}`,
-          completed: true,
-        })),
-    },
-    {
-      id: 16,
-      laptop_brand: "Lenovo",
-      laptop_model: "ThinkPad X1",
-      description: "slow performance",
-      created_at: "2025-07-08T14:15:22.987654",
-      solved: false,
-      steps: Array(8)
-        .fill(null)
-        .map((_, i) => ({
-          id: 400 + i,
-          step_number: i + 1,
-          instruction: `Performance step ${i + 1}`,
-          completed: i < 4,
-        })),
-    },
-  ];
+  // Fetch user problems from backend
+  const loadHistory = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        throw new Error("No auth token found. Please login first.");
+      }
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+      const response = await axios.get(
+        "https://ent-project.onrender.com/troubleshoot/user/problems",
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setHistory(response.data || []);
+    } catch (err) {
+      const error = err as AxiosError<{ message?: string }>; // 👈 cast properly
+      console.error("Error fetching history:", error);
+
+      setError(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to load diagnosis history"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     loadHistory();
   }, []);
-
-  const loadHistory = () => {
-    setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setHistory(mockHistory);
-      setLoading(false);
-    }, 500);
-  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -126,31 +93,40 @@ export default function HistoryPage() {
     });
   };
 
-  const getCompletionPercentage = (steps: DiagnosisStep[]) => {
-    const completed = steps.filter((step) => step.completed).length;
-    return Math.round((completed / steps.length) * 100);
+  const getCompletionPercentage = (solved: boolean) => {
+    return solved ? 100 : 0;
   };
 
-  const getDifficultyInfo = (stepsCount: number) => {
-    if (stepsCount <= 5)
+  const getDifficultyInfo = (description: string) => {
+    // Simple difficulty assessment based on description keywords
+    const desc = description.toLowerCase();
+    const hardKeywords = ["not working", "won't start", "blue screen", "crash"];
+    const mediumKeywords = ["slow", "overheating", "battery", "wifi"];
+
+    if (hardKeywords.some((keyword) => desc.includes(keyword))) {
       return {
-        level: "Easy",
-        color: "bg-green-100 text-green-800",
-        icon: "🟢",
+        level: "Hard",
+        color: "bg-red-100 text-red-800",
+        icon: "🔴",
       };
-    if (stepsCount <= 15)
+    }
+    if (mediumKeywords.some((keyword) => desc.includes(keyword))) {
       return {
         level: "Medium",
         color: "bg-amber-100 text-amber-800",
         icon: "🟡",
       };
-    return { level: "Hard", color: "bg-red-100 text-red-800", icon: "🔴" };
+    }
+    return {
+      level: "Easy",
+      color: "bg-green-100 text-green-800",
+      icon: "🟢",
+    };
   };
 
-  const getStatusIcon = (solved: boolean, percentage: number) => {
+  const getStatusIcon = (solved: boolean) => {
     if (solved) return <CheckCircle2 className="w-5 h-5 text-green-500" />;
-    if (percentage > 0) return <Clock className="w-5 h-5 text-amber-500" />;
-    return <XCircle className="w-5 h-5 text-gray-400" />;
+    return <Clock className="w-5 h-5 text-amber-500" />;
   };
 
   const filteredHistory = history.filter((item) => {
@@ -197,7 +173,7 @@ export default function HistoryPage() {
             className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse"
             style={{ backgroundColor: "#2218DE" }}
           >
-            <Clock className="w-8 h-8 text-white" />
+            <RefreshCw className="w-8 h-8 text-white animate-spin" />
           </div>
           <h2 className="text-xl font-semibold text-gray-800 mb-2">
             Loading History...
@@ -205,6 +181,29 @@ export default function HistoryPage() {
           <p className="text-gray-600">
             Please wait while we fetch your diagnosis history
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle className="w-8 h-8 text-red-500" />
+          </div>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">
+            Error Loading History
+          </h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={loadHistory}
+            className="text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 hover:scale-105 shadow-lg"
+            style={{ backgroundColor: "#2218DE" }}
+          >
+            Try Again
+          </button>
         </div>
       </div>
     );
@@ -264,7 +263,7 @@ export default function HistoryPage() {
                 placeholder="Search by brand, model, or issue..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#2218DE] transition-colors"
+                className="w-full pl-10 pr-4 py-3 text-gray-700 border border-gray-300 rounded-xl focus:outline-none focus:border-[#2218DE] transition-colors"
               />
             </div>
 
@@ -278,7 +277,7 @@ export default function HistoryPage() {
                       e.target.value as "all" | "solved" | "pending"
                     )
                   }
-                  className="pl-10 pr-8 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#2218DE] transition-colors appearance-none bg-white"
+                  className="pl-10 pr-8 py-3 border text-gray-700 border-gray-300 rounded-xl focus:outline-none focus:border-[#2218DE] transition-colors appearance-none bg-white"
                 >
                   <option value="all">All Status</option>
                   <option value="solved">Resolved</option>
@@ -401,8 +400,8 @@ export default function HistoryPage() {
         ) : (
           <div className="space-y-4">
             {filteredHistory.map((item) => {
-              const completion = getCompletionPercentage(item.steps);
-              const difficulty = getDifficultyInfo(item.steps.length);
+              const completion = getCompletionPercentage(item.solved);
+              const difficulty = getDifficultyInfo(item.description);
               const isSelected = selectedItems.has(item.id);
 
               return (
@@ -428,7 +427,7 @@ export default function HistoryPage() {
 
                         <div className="flex-1">
                           <div className="flex items-center space-x-3 mb-2">
-                            {getStatusIcon(item.solved, completion)}
+                            {getStatusIcon(item.solved)}
                             <h3 className="text-xl font-bold text-gray-800">
                               {item.laptop_brand} {item.laptop_model}
                             </h3>
@@ -452,7 +451,7 @@ export default function HistoryPage() {
                               <Clock className="w-4 h-4" />
                               <span>{formatTime(item.created_at)}</span>
                             </span>
-                            <span>{item.steps.length} steps total</span>
+                            <span>Problem ID: #{item.id}</span>
                           </div>
                         </div>
                       </div>
@@ -474,22 +473,16 @@ export default function HistoryPage() {
                     <div className="mb-4">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-medium text-gray-700">
-                          Progress: {completion}%
+                          Status: {item.solved ? "Completed" : "Pending"}
                         </span>
                         <span
                           className={`text-xs px-2 py-1 rounded-full ${
                             item.solved
                               ? "bg-green-100 text-green-800"
-                              : completion > 0
-                              ? "bg-amber-100 text-amber-800"
-                              : "bg-gray-100 text-gray-600"
+                              : "bg-amber-100 text-amber-800"
                           }`}
                         >
-                          {item.solved
-                            ? "Completed"
-                            : completion > 0
-                            ? "In Progress"
-                            : "Not Started"}
+                          {item.solved ? "Resolved" : "In Progress"}
                         </span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
@@ -499,7 +492,7 @@ export default function HistoryPage() {
                             width: `${completion}%`,
                             background: item.solved
                               ? "linear-gradient(90deg, #10B981, #059669)"
-                              : `linear-gradient(90deg, #2218DE, #6B46C1)`,
+                              : "linear-gradient(90deg, #F59E0B, #D97706)",
                           }}
                         ></div>
                       </div>
