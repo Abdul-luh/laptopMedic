@@ -43,7 +43,7 @@ export default function PageHeader() {
           <nav className="hidden md:flex items-center space-x-1">
             
             
-            {isAuthenticated ? (
+            {isAuthenticated && user ? (
               // Navigation for authenticated users
               <>
                 
@@ -198,6 +198,13 @@ export default function PageHeader() {
               ) : (
                 // Mobile navigation for non-authenticated users
                 <>
+                  <Link
+                    href="/contact"
+                    className="block px-4 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Contact
+                  </Link>
                   <Link
                     href="/about"
                     className="block px-4 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors"
