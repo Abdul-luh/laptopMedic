@@ -395,30 +395,7 @@ export default function CommonIssuesPage() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-white">
             <div className="max-w-7xl mx-auto py-8 px-4">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-8">
-                    <div className="flex items-center space-x-4">
-                        <button className="p-2 hover:bg-white hover:shadow-md rounded-lg transition-all duration-200">
-                            <ArrowLeft className="w-6 h-6 text-gray-600" />
-                        </button>
-                        <div className="flex items-center space-x-3">
-                            <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg" style={{ backgroundColor: "#2218DE" }}>
-                                <BookOpen className="w-6 h-6 text-white" />
-                            </div>
-                            <div>
-                                <h1 className="text-2xl font-bold text-gray-800">Laptop Medic</h1>
-                                <p className="text-gray-600 text-sm">Common Issues & Solutions</p>
-                            </div>
-                        </div>
-                    </div>
-          
-                    <div className="hidden md:flex items-center space-x-6 text-sm font-medium text-gray-600">
-                        <span className="cursor-pointer transition-colors" style={{ color: "#2218DE" }}>Home</span>
-                        <span className="hover:text-blue-600 cursor-pointer transition-colors">Diagnose</span>
-                        <span className="hover:text-blue-600 cursor-pointer transition-colors">Contact</span>
-                        <span className="hover:text-blue-600 cursor-pointer transition-colors">Account</span>
-                    </div>
-                </div>
+             
 
                 {/* Search and Filter */}
                 <div className="bg-white rounded-2xl shadow-md p-6 mb-6 border border-gray-200">
