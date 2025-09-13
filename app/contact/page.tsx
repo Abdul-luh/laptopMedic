@@ -60,7 +60,7 @@ export default function ContactPage() {
   }, []);
 
   const fetchEngineers = async () => {
-    try {
+    try { 
       const response = await authApi.get("/troubleshoot/engineers");
       console.log("Engineers fetched:", response.data);
       setEngineers(response.data);
@@ -163,7 +163,7 @@ export default function ContactPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-6">
+    <div className="min-h-screen bg-gray-50 py-12 px-4">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-4xl font-bold text-blue-700 mb-2 text-center">
           Need Technical Support?

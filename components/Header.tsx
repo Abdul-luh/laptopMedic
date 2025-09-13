@@ -42,7 +42,6 @@ export default function PageHeader() {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-1">
             
-            
             {isAuthenticated && user ? (
               // Navigation for authenticated users
               <>
@@ -58,6 +57,12 @@ export default function PageHeader() {
                   className="px-4 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors"
                 >
                   History
+                </Link>
+                <Link
+                  href="/common-issues"
+                  className="px-4 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors"
+                >
+                  Common Issues
                 </Link>
                 {(user?.role === 'admin' || user?.role === 'engineer') && (
                   <Link
@@ -82,7 +87,12 @@ export default function PageHeader() {
             ) : (
               // Navigation for non-authenticated users
               <>
-                
+                <Link
+                  href="/common-issues"
+                  className="px-4 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors"
+                >
+                  Common Issues
+                </Link>
                 <Link
                   href="/about"
               className="px-4 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors"
@@ -172,6 +182,13 @@ export default function PageHeader() {
                   >
                     History
                   </Link>
+                  <Link
+                    href="/common-issues"
+                    className="block px-4 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Common Issues
+                  </Link>
                   {(user?.role === 'admin' || user?.role === 'engineer') && (
                     <Link
                       href={user.role === 'admin' ? '/admin' : '/engineer'}
@@ -204,6 +221,13 @@ export default function PageHeader() {
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Contact
+                  </Link>
+                  <Link
+                    href="/common-issues"
+                    className="block px-4 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Common Issues
                   </Link>
                   <Link
                     href="/about"

@@ -1,5 +1,5 @@
 // lib/auth.ts
-import axios from 'axios';
+import axios from "axios";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -7,7 +7,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 export const authApi = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
   timeout: 10000,
 });
@@ -15,7 +15,7 @@ export const authApi = axios.create({
 // Add request interceptor to include auth token
 authApi.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem("authToken");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -34,7 +34,10 @@ authApi.interceptors.response.use(
       const originalRequest = error.config;
 
       // Skip redirect if it's the login or register request
-      if (!originalRequest?.url?.includes("/auth/login") && !originalRequest?.url?.includes("/auth/register")) {
+      if (
+        !originalRequest?.url?.includes("/auth/login") &&
+        !originalRequest?.url?.includes("/auth/register")
+      ) {
         authUtils.logout();
         window.location.href = "/login";
       }
@@ -47,10 +50,8 @@ interface User {
   id: string;
   name: string;
   email: string;
-  role: 'user' | 'engineer' | 'admin';
+  role: "user" | "engineer" | "admin";
 }
-
-// Removed unused LoginResponse interface
 
 interface AuthData {
   isLoggedIn: boolean;
@@ -58,21 +59,40 @@ interface AuthData {
   token: string | null;
 }
 
+// Define the shape of the data needed for registration
+interface RegisterRequest {
+  name: string;
+  email: string;
+  password: string;
+  role: string;
+  location?: string;
+  service_time?: number;
+  picture_url?: string;
+}
+
 export const authUtils = {
   // Get current auth data from localStorage
   getAuthData(): AuthData {
+    if (typeof window === "undefined") {
+      return {
+        isLoggedIn: false,
+        user: null,
+        token: null,
+      };
+    }
     try {
-      const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-      const userStr = localStorage.getItem('user');
-      const token = localStorage.getItem('authToken');
-      
+      const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+      const userStr = localStorage.getItem("user");
+      const token = localStorage.getItem("authToken");
+
+
       return {
         isLoggedIn,
         user: userStr ? JSON.parse(userStr) : null,
         token,
       };
     } catch (error) {
-      console.error('Error getting auth data:', error);
+      console.error("Error getting auth data:", error);
       return {
         isLoggedIn: false,
         user: null,
@@ -81,121 +101,135 @@ export const authUtils = {
     }
   },
 
- // Login function
-async login(email: string, password: string) {
-  try {
-    const response = await authApi.post<{ access_token: string; token_type: string }>(
-      "/auth/login",
-      { email, password }
-    );
-
-    if (response.status === 200 || response.status === 201) {
-      const { access_token, token_type } = response.data;
-
-      // Store token
-      localStorage.setItem("authToken", access_token);
-      localStorage.setItem("isLoggedIn", "true");
-
-      // Fetch user profile with Authorization header
-      try {
-        const userResponse = await authApi.get("/auth/me", {
-          headers: {
-            Authorization: `${token_type} ${access_token}`,
-          },
-        });
-
-        const userData = userResponse.data; // backend returns full user object
-        localStorage.setItem("user", JSON.stringify(userData));
-
-        return {
-          success: true,
-          user: userData,
-          token: access_token,
-        };
-      } catch (userError) {
-        console.error("Failed to fetch user profile:", userError);
-
-        // clean up storage since we can't complete login properly
-        localStorage.removeItem("authToken");
-        localStorage.removeItem("isLoggedIn");
-        localStorage.removeItem("user");
-
-        return {
-          success: false,
-          error: "Failed to fetch user profile. Please try again.",
-        };
-      }
-    }
-
-    return { success: false, error: "Login failed" };
-  } catch (error) {
-    // console.error("Login error:", error);
-
-    if (axios.isAxiosError(error)) {
-  if (error.response) {
-    const result = error.response.data;
-
-    // ✅ Fallback to generic string if message doesn’t exist
-    const backendError =
-      result.message || result.error || result.detail || "Login failed";
-
-    return { success: false, error: backendError };
-  } else if (error.request) {
-    return {
-      success: false,
-      error: "Network error. Please check your connection.",
-    };
-  }
-}
-
-
-    return { success: false, error: "Login failed. Please try again." };
-  }
-},
-
-
-  // Register function
-  async register(userData: {
-    name: string;
-    email: string;
-    password: string;
-    role?: string;
-  }) {
+  // Login function
+  async login(email: string, password: string) {
     try {
-      const response = await authApi.post('/auth/register', userData);
-      
+      const response = await authApi.post<{
+        access_token: string;
+        token_type: string;
+      }>("/auth/login", { email, password });
+
       if (response.status === 200 || response.status === 201) {
-        return { success: true };
+        const { access_token, token_type } = response.data;
+
+        localStorage.setItem("authToken", access_token);
+        localStorage.setItem("isLoggedIn", "true");
+
+        try {
+          const userResponse = await authApi.get("/auth/me", {
+            headers: {
+              Authorization: `${token_type} ${access_token}`,
+            },
+          });
+
+          const userData = userResponse.data;
+          localStorage.setItem("user", JSON.stringify(userData));
+
+          return {
+            success: true,
+            user: userData,
+            token: access_token,
+          };
+        } catch (userError) {
+          console.error("Failed to fetch user profile:", userError);
+          localStorage.removeItem("authToken");
+          localStorage.removeItem("isLoggedIn");
+          localStorage.removeItem("user");
+          return {
+            success: false,
+            error: "Failed to fetch user profile. Please try again.",
+          };
+        }
       }
-      
-      return { success: false, error: 'Registration failed' };
+
+      return { success: false, error: "Login failed" };
     } catch (error) {
-      console.error('Registration error:', error);
-      
       if (axios.isAxiosError(error)) {
         if (error.response) {
           const result = error.response.data;
-          
+          const backendError =
+            result.message || result.error || result.detail || "Login failed";
+          return { success: false, error: backendError };
+        } else if (error.request) {
+          return {
+            success: false,
+            error: "Network error. Please check your connection.",
+          };
+        }
+      }
+      return { success: false, error: "Login failed. Please try again." };
+    }
+  },
+
+  // Register function
+  async register(formData: RegisterRequest) {
+    try {
+      // Determine the API endpoint based on the user's role
+      let endpoint = "/auth/register";
+      console.log("Registering user with role:", formData.role);
+      
+      if (formData.role !== "user") {
+        endpoint = "/troubleshoot/engineers";
+      }
+      const registerData = {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        role: formData.role,
+        // Conditionally include engineer fields using the spread operator
+        ...(formData.role === "engineer" && {
+          location: formData.location,
+          service_time: formData.service_time,
+          picture_url: formData.picture_url,
+        }),
+      };
+
+      const response = await authApi.post(endpoint, registerData);
+      console.log("Registration response:", response);
+
+
+      if (response.status === 200 || response.status === 201) {
+        return { success: true };
+      }
+
+      return { success: false, error: "Registration failed" };
+    } catch (error) {
+      console.error("Registration error:", error);
+
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          const result = error.response.data;
           if (result.message) {
-            return { success: false, error: result.message, errors: result.errors };
+            return {
+              success: false,
+              error: result.message,
+              errors: result.errors,
+            };
           } else if (result.errors) {
-            return { success: false, error: 'Registration failed', errors: result.errors };
+            return {
+              success: false,
+              error: "Registration failed",
+              errors: result.errors,
+            };
           }
         }
       }
-      
-      return { success: false, error: 'Registration failed. Please try again.' };
+
+      return {
+        success: false,
+        error: "Registration failed. Please try again.",
+      };
     }
   },
 
   // Logout function
   logout() {
     try {
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('user');
-      localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("user");
+      localStorage.removeItem("isLoggedIn");
     } catch (error) {
-      console.error('Error during logout:', error);
+      console.error("Error during logout:", error);
     }
   },
 
@@ -213,7 +247,9 @@ async login(email: string, password: string) {
   getToken(): string | null {
     return this.getAuthData().token;
   },
-};let logoutTimer: NodeJS.Timeout | null = null;
+};
+
+let logoutTimer: NodeJS.Timeout | null = null;
 
 const startLogoutTimer = () => {
   if (logoutTimer) {
@@ -232,7 +268,7 @@ const resetLogoutTimer = () => {
 };
 
 // Initialize timer on page load if already logged in
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   window.onload = resetLogoutTimer;
   window.onmousemove = resetLogoutTimer;
   window.onkeypress = resetLogoutTimer;

@@ -16,6 +16,7 @@ export default function AboutPage() {
   };
 
   const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
     visible: {
       opacity: 1,
       y: 0,
@@ -24,6 +25,7 @@ export default function AboutPage() {
   };
 
   const cardVariants = {
+    hidden: { opacity: 0, scale: 0.95 },
     visible: {
       opacity: 1,
       scale: 1,
@@ -180,6 +182,7 @@ export default function AboutPage() {
           <motion.section
             className="mb-16"
             initial="hidden"
+            variants={containerVariants}
             whileInView="visible"
             viewport={{ once: true, amount: 0.2 }}
           >

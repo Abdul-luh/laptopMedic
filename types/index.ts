@@ -30,5 +30,8 @@ export interface RegisterRequest {
   email: string;
   password: string;
   role: string;
+  location?: string;
+  service_time?: number;
+  picture_url?: string;
 }
 

@@ -10,16 +10,16 @@ import { registerSchema } from "@/lib/validation";
 import Image from "next/image";
 import Logo from "@/components/logo";
 
-
 type RegisterFormData = z.infer<typeof registerSchema>;
 const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export default function RegisterPage() {
+  const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<Partial<RegisterFormData>>({
     role: "user",
-    service_time: undefined, // Add new fields
-    picture_url: undefined, // Add new fields
-    location: undefined, // Add location to state
+    service_time: undefined,
+    picture_url: undefined,
+    location: undefined,
   });
 
   const [showPassword, setShowPassword] = useState(false);
@@ -37,6 +37,49 @@ export default function RegisterPage() {
     }
   };
 
+  const validateStep1 = () => {
+    const step1Schema = z
+      .object({
+        name: z.string().min(1, "Name is required"),
+        email: z.string().email("Invalid email address"),
+        password: z.string().min(6, "Password must be at least 6 characters"),
+        confirmPassword: z.string(),
+        role: z.enum(["user", "engineer"]),
+      })
+      .refine((data) => data.password === data.confirmPassword, {
+        message: "Passwords don't match",
+        path: ["confirmPassword"],
+      });
+
+    try {
+      step1Schema.parse(formData);
+      setErrors({});
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const validationErrors: Record<string, string> = {};
+        error.issues.forEach((issue) => {
+          if (issue.path.length > 0 && typeof issue.path[0] === "string") {
+            validationErrors[issue.path[0]] = issue.message;
+          }
+        });
+        setErrors(validationErrors);
+      }
+
+      return false;
+    }
+  };
+
+  const handleNext = () => {
+    if (validateStep1()) {
+      setCurrentStep(2);
+    }
+  };
+
+  const handleBack = () => {
+    setCurrentStep(1);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -44,15 +87,23 @@ export default function RegisterPage() {
 
     try {
       // Validate form data
-      const validatedData = registerSchema.parse(formData); // Prepare data for backend
+      const validatedData = registerSchema.parse(formData);
 
       const registerData: RegisterRequest = {
         name: validatedData.name,
         email: validatedData.email,
         password: validatedData.password,
         role: validatedData.role,
-        location: validatedData.location, // Include location in the payload
-      }; // Call your backend API using axios
+        location: validatedData.location,
+        service_time:
+          validatedData.role === "engineer"
+            ? validatedData.service_time
+            : undefined,
+        picture_url:
+          validatedData.role === "engineer"
+            ? validatedData.picture_url
+            : undefined,
+      };
 
       const response = await axios.post(
         `${baseURL}/auth/register`,
@@ -61,28 +112,25 @@ export default function RegisterPage() {
           headers: {
             "Content-Type": "application/json",
           },
-          timeout: 10000, // 10 second timeout
+          timeout: 10000,
         }
       );
 
       console.log(response);
 
       if (response.status === 200 || response.status === 201) {
-        setRegistrationSuccess(true); // Optionally redirect to login page after success
+        setRegistrationSuccess(true);
         setTimeout(() => {
           router.push("/login");
         }, 2000);
       }
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
-        // Handle axios errors (network, HTTP errors)
         if (error.response) {
-          // Server responded with error status
           const result = error.response.data;
           if (result.message) {
             setErrors({ general: result.message });
           } else if (result.errors && Array.isArray(result.errors)) {
-            // Handle field-specific errors from backend
             const backendErrors: Record<string, string> = {};
             result.errors.forEach(
               (error: { field: string; message: string }) => {
@@ -96,13 +144,11 @@ export default function RegisterPage() {
             });
           }
         } else if (error.request) {
-          // Network error
           setErrors({
             general:
               "Network error. Please check your connection and try again.",
           });
         } else {
-          // Other axios error
           setErrors({
             general: "An unexpected error occurred. Please try again.",
           });
@@ -113,7 +159,6 @@ export default function RegisterPage() {
         "errors" in error &&
         Array.isArray((error as { errors: unknown }).errors)
       ) {
-        // Handle Zod validation errors
         const validationErrors: Record<string, string> = {};
         (
           error as { errors: Array<{ path: [string]; message: string }> }
@@ -122,7 +167,6 @@ export default function RegisterPage() {
         });
         setErrors(validationErrors);
       } else {
-        // Handle other errors
         setErrors({
           general: "Registration failed. Please try again.",
         });
@@ -131,6 +175,251 @@ export default function RegisterPage() {
       setIsLoading(false);
     }
   };
+
+  const renderStepIndicator = () => {
+    if (formData.role !== "engineer") return null;
+
+    return (
+      <div className="flex items-center justify-center mb-8">
+        <div className="flex items-center space-x-4">
+          <div
+            className={`flex items-center justify-center w-8 h-8 rounded-full ${
+              currentStep >= 1
+                ? "bg-[#2218DE] text-white"
+                : "bg-gray-200 text-gray-600"
+            }`}
+          >
+            1
+          </div>
+          <div
+            className={`w-8 h-1 ${
+              currentStep >= 2 ? "bg-[#2218DE]" : "bg-gray-200"
+            }`}
+          ></div>
+          <div
+            className={`flex items-center justify-center w-8 h-8 rounded-full ${
+              currentStep >= 2
+                ? "bg-[#2218DE] text-white"
+                : "bg-gray-200 text-gray-600"
+            }`}
+          >
+            2
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderStep1 = () => (
+    <>
+      {/* Full Name */}
+      <div>
+        <input
+          id="name"
+          type="text"
+          value={formData.name || ""}
+          onChange={(e) => handleInputChange("name", e.target.value)}
+          className="w-full px-4 py-3 border-2 border-[#2218DE] rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
+          placeholder="Full name"
+          required
+        />
+        {errors.name && (
+          <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+        )}
+      </div>
+
+      {/* Email Address */}
+      <div>
+        <input
+          id="email"
+          type="email"
+          value={formData.email || ""}
+          onChange={(e) => handleInputChange("email", e.target.value)}
+          className="w-full px-4 py-3 border-2 border-[#2218DE] rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
+          placeholder="Email Address"
+          required
+        />
+        {errors.email && (
+          <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+        )}
+      </div>
+
+      {/* Password */}
+      <div className="relative">
+        <input
+          id="password"
+          type={showPassword ? "text" : "password"}
+          value={formData.password || ""}
+          onChange={(e) => handleInputChange("password", e.target.value)}
+          className="w-full px-4 py-3 border-2 border-[#2218DE] rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
+          placeholder="Password"
+          required
+        />
+        <button
+          type="button"
+          onClick={() => setShowPassword(!showPassword)}
+          className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+        >
+          {showPassword ? "🙈" : "👁️"}
+        </button>
+        {errors.password && (
+          <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+        )}
+      </div>
+
+      {/* Confirm Password */}
+      <div className="relative">
+        <input
+          id="confirmPassword"
+          type={showConfirmPassword ? "text" : "password"}
+          value={formData.confirmPassword || ""}
+          onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
+          className="w-full px-4 py-3 border-2 border-[#2218DE] rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
+          placeholder="Confirm Password"
+          required
+        />
+        <button
+          type="button"
+          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+          className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+        >
+          {showConfirmPassword ? "🙈" : "👁️"}
+        </button>
+        {errors.confirmPassword && (
+          <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>
+        )}
+      </div>
+
+      {/* Role Selection */}
+      <div className="relative">
+        <select
+          id="role"
+          value={formData.role || "user"}
+          onChange={(e) => handleInputChange("role", e.target.value)}
+          className="w-full px-4 py-3 border-2 border-[#2218DE] rounded-full text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-600 appearance-none bg-white"
+        >
+          <option value="user">User</option>
+          <option value="engineer">Engineer</option>
+        </select>
+        <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
+          <svg
+            className="w-4 h-4 text-gray-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 9l-7 7-7-7"
+            />
+          </svg>
+        </div>
+        {errors.role && (
+          <p className="mt-1 text-sm text-red-600">{errors.role}</p>
+        )}
+      </div>
+    </>
+  );
+
+  const renderStep2 = () => (
+    <>
+      {/* Service Time */}
+      <div>
+        <input
+          id="service_time"
+          type="number"
+          value={formData.service_time || ""}
+          onChange={(e) => handleInputChange("service_time", e.target.value)}
+          className="w-full px-4 py-3 border-2 border-[#2218DE] rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
+          placeholder="Service Time (hours)"
+          required
+        />
+        {errors.service_time && (
+          <p className="mt-1 text-sm text-red-600">{errors.service_time}</p>
+        )}
+      </div>
+
+      {/* Picture URL */}
+      <div>
+        <input
+          id="picture_url"
+          type="url"
+          value={formData.picture_url || ""}
+          onChange={(e) => handleInputChange("picture_url", e.target.value)}
+          className="w-full px-4 py-3 border-2 border-[#2218DE] rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
+          placeholder="Profile Picture URL"
+          // required
+        />
+        {errors.picture_url && (
+          <p className="mt-1 text-sm text-red-600">{errors.picture_url}</p>
+        )}
+      </div>
+
+      {/* Location */}
+      <div>
+        <input
+          id="location"
+          type="text"
+          value={formData.location || ""}
+          onChange={(e) => handleInputChange("location", e.target.value)}
+          className="w-full px-4 py-3 border-2 border-[#2218DE] rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
+          placeholder="Location"
+          required
+        />
+        {errors.location && (
+          <p className="mt-1 text-sm text-red-600">{errors.location}</p>
+        )}
+      </div>
+    </>
+  );
+
+  const renderActionButtons = () => {
+    if (formData.role === "user") {
+      return (
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="w-full py-3 rounded-full bg-[#2218DE] hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold transition text-lg"
+        >
+          {isLoading ? "Creating Account..." : "Sign up"}
+        </button>
+      );
+    }
+
+    if (currentStep === 1) {
+      return (
+        <button
+          type="button"
+          onClick={handleNext}
+          className="w-full py-3 rounded-full bg-[#2218DE] hover:bg-blue-700 text-white font-semibold transition text-lg"
+        >
+          Next
+        </button>
+      );
+    }
+
+    return (
+      <div className="flex space-x-4">
+        <button
+          type="button"
+          onClick={handleBack}
+          className="w-1/2 py-3 rounded-full border-2 border-[#2218DE] text-[#2218DE] font-semibold transition text-lg hover:bg-[#2218DE] hover:text-white"
+        >
+          Back
+        </button>
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="w-1/2 py-3 rounded-full bg-[#2218DE] hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold transition text-lg"
+        >
+          {isLoading ? "Creating Account..." : "Sign up"}
+        </button>
+      </div>
+    );
+  };
+
   if (registrationSuccess) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
@@ -180,6 +469,9 @@ export default function RegisterPage() {
             <Logo />
           </div>
 
+          {/* Step Indicator */}
+          {renderStepIndicator()}
+
           {/* General Error Message */}
           {errors.general && (
             <div className="mb-6 flex items-center p-3 rounded-lg border border-red-300 bg-red-50 text-red-700 text-sm">
@@ -202,191 +494,13 @@ export default function RegisterPage() {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="max-w-md w-full space-y-6">
-            {/* Full Name */}
-            <div>
-              <input
-                id="name"
-                type="text"
-                value={formData.name || ""}
-                onChange={(e) => handleInputChange("name", e.target.value)}
-                className="w-full px-4 py-3 border-2 border-[#2218DE] rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
-                placeholder="Full name"
-                required
-              />
-              {errors.name && (
-                <p className="mt-1 text-sm text-red-600">{errors.name}</p>
-              )}
-            </div>
+            {/* Render form fields based on role and step */}
+            {formData.role === "user" || currentStep === 1
+              ? renderStep1()
+              : renderStep2()}
 
-            {/* Email Address */}
-            <div>
-              <input
-                id="email"
-                type="email"
-                value={formData.email || ""}
-                onChange={(e) => handleInputChange("email", e.target.value)}
-                className="w-full px-4 py-3 border-2 border-[#2218DE] rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
-                placeholder="Email Address"
-                required
-              />
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email}</p>
-              )}
-            </div>
-
-            {/* Password */}
-            <div className="relative">
-              <input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                value={formData.password || ""}
-                onChange={(e) => handleInputChange("password", e.target.value)}
-                className="w-full px-4 py-3 border-2 border-[#2218DE] rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
-                placeholder="Password"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                {showPassword ? "🙈" : "👁️"}
-              </button>
-              {errors.password && (
-                <p className="mt-1 text-sm text-red-600">{errors.password}</p>
-              )}
-            </div>
-
-            {/* Confirm Password */}
-            <div className="relative">
-              <input
-                id="confirmPassword"
-                type={showConfirmPassword ? "text" : "password"}
-                value={formData.confirmPassword || ""}
-                onChange={(e) =>
-                  handleInputChange("confirmPassword", e.target.value)
-                }
-                className="w-full px-4 py-3 border-2 border-[#2218DE] rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
-                placeholder="Confirm Password"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                {showConfirmPassword ? "🙈" : "👁️"}
-              </button>
-              {errors.confirmPassword && (
-                <p className="mt-1 text-sm text-red-600">
-                  {errors.confirmPassword}
-                </p>
-              )}
-            </div>
-
-            {/* Role Selection (kept as dropdown but styled to match) */}
-            <div>
-              <select
-                id="role"
-                value={formData.role || "user"}
-                onChange={(e) => handleInputChange("role", e.target.value)}
-                className="w-full px-4 py-3 border-2 border-[#2218DE] rounded-full text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-600 appearance-none bg-white"
-              >
-                <option value="user">User</option>
-                <option value="engineer">Engineer</option>
-              </select>
-              <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                <svg
-                  className="w-4 h-4 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
-              </div>
-              {errors.role && (
-                <p className="mt-1 text-sm text-red-600">{errors.role}</p>
-              )}
-            </div>
-
-            {formData.role === "engineer" && (
-              <>
-                {/* Service Time */}
-                <div>
-                  <input
-                    id="service_time"
-                    type="number"
-                    value={formData.service_time || ""}
-                    onChange={(e) =>
-                      handleInputChange("service_time", e.target.value)
-                    }
-                    className="w-full px-4 py-3 border-2 border-[#2218DE] rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
-                    placeholder="Service Time (hours)"
-                    required
-                  />
-                  {errors.service_time && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {errors.service_time}
-                    </p>
-                  )}
-                </div>
-
-                {/* Picture URL */}
-                <div>
-                  <input
-                    id="picture_url"
-                    type="url"
-                    value={formData.picture_url || ""}
-                    onChange={(e) =>
-                      handleInputChange("picture_url", e.target.value)
-                    }
-                    className="w-full px-4 py-3 border-2 border-[#2218DE] rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
-                    placeholder="Profile Picture URL"
-                    required
-                  />
-                  {errors.picture_url && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {errors.picture_url}
-                    </p>
-                  )}
-                </div>
-
-                {/* Location */}
-                <div>
-                  <input
-                    id="location"
-                    type="text"
-                    value={formData.location || ""}
-                    onChange={(e) =>
-                      handleInputChange("location", e.target.value)
-                    }
-                    className="w-full px-4 py-3 border-2 border-[#2218DE] rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
-                    placeholder="Location"
-                    required
-                  />
-                  {errors.location && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {errors.location}
-                    </p>
-                  )}
-                </div>
-              </>
-            )}
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full py-3 rounded-full bg-[#2218DE] hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold transition text-lg"
-            >
-              {isLoading ? "Creating Account..." : "Sign up"}
-            </button>
+            {/* Action Buttons */}
+            {renderActionButtons()}
 
             <p className="text-center text-gray-600">
               Already have an account?{" "}

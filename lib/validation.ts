@@ -28,11 +28,12 @@ const registerSchema = z.object({
   confirmPassword: z.string(),
   role: z.enum(["user", "engineer"]),
   service_time: z.coerce.number().min(0, "Service time cannot be negative").optional(),
+  location: z.string().min(1, "Location is required").optional(),
   picture_url: z.string().url("Invalid URL").optional(),
 }).refine(
   (data) => {
     if (data.role === "engineer") {
-      return data.service_time !== undefined && data.picture_url !== undefined && datalocation;
+      return data.service_time !== undefined && data.picture_url !== undefined && data.location;
     }
     return true;
   },

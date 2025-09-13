@@ -27,7 +27,7 @@ interface RegisterData {
   name: string;
   email: string;
   password: string;
-  role?: string;
+  role: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
